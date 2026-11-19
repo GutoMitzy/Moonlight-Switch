@@ -469,14 +469,33 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
     // The host needs type/capabilities again for every new stream, even when
     // no buttons changed and the controller count stayed the same.
     if (announcedControllerCount != controllersCount) {
+        const int previousControllerCount = newStream
+            ? 0
+            : std::max(announcedControllerCount, 0);
         bool announced = true;
         for (int i = 0; i < controllersCount; i++) {
             announced &= LiSendControllerArrivalEvent(
                              i, mappedControllersCount, LI_CTYPE_UNKNOWN, 0,
                              LI_CCAP_RUMBLE | LI_CCAP_ACCEL | LI_CCAP_GYRO) == 0;
         }
+
+        // A zero activeGamepadMask is the protocol signal that removes stale
+        // virtual gamepads after a physical Joy-Con is disconnected.
+        GamepadState neutralState{};
+        for (int i = controllersCount; i < previousControllerCount; i++) {
+            const int result = LiSendMultiControllerEvent(
+                i, mappedControllersCount, neutralState.buttonFlags,
+                neutralState.leftTrigger, neutralState.rightTrigger,
+                neutralState.leftStickX, neutralState.leftStickY,
+                neutralState.rightStickX, neutralState.rightStickY);
+            announced &= result == 0;
+            if (result != 0)
+                Logger::warning("StreamingView: failed to deactivate controller {}", i);
+        }
+
         if (announced) {
-            Logger::debug("StreamingView: announced {} controller(s)", controllersCount);
+            Logger::info("StreamingView: active controllers changed {} -> {} (mask=0x{:x})",
+                previousControllerCount, controllersCount, mappedControllersCount);
             announcedControllerCount = controllersCount;
         }
     }
