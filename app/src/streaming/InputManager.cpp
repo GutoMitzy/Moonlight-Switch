@@ -652,20 +652,16 @@ void MoonlightInputManager::handleInput(bool ignoreTouch) {
 }
 
 short MoonlightInputManager::controllersToMap() {
-    switch (brls::Application::getPlatform()
-                ->getInputManager()
-                ->getControllersConnectedCount()) {
-    case 0:
+    // One bit per connected controller, up to GAMEPADS_MAX (the old table
+    // stopped at 0xF and left the 5th controller out of the active mask)
+    int count = brls::Application::getPlatform()
+                    ->getInputManager()
+                    ->getControllersConnectedCount();
+    if (count <= 0)
         return 0x0;
-    case 1:
-        return 0x1;
-    case 2:
-        return 0x3;
-    case 3:
-        return 0x7;
-    default:
-        return 0xF;
-    }
+    if (count > GAMEPADS_MAX)
+        count = GAMEPADS_MAX;
+    return (short)((1 << count) - 1);
 }
 
 brls::ControllerState
