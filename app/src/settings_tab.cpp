@@ -609,9 +609,24 @@ SettingsTab::SettingsTab() {
     joyconPairGyroMode->getEvent()->subscribe([](int selected) {
         Settings::instance().set_joycon_pair_gyro_mode(selected);
     });
+
+    joyconCalibrate->setText("settings/joycon_calibrate"_i18n);
+    joyconCalibrate->setDetailText("settings/joycon_calibrate_instructions"_i18n);
+    joyconCalibrate->registerClickAction([this](View*) {
+        auto* input = static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager());
+        const bool ok = input->calibrateJoyConsOnFlatSurface();
+        if (ok)
+            Settings::instance().save();
+        joyconCalibrate->setDetailText(ok ? "settings/joycon_calibrate_success"_i18n
+                                        : "settings/joycon_calibrate_failed"_i18n);
+        Application::notify(ok ? "settings/joycon_calibrate_success"_i18n
+                               : "settings/joycon_calibrate_failed"_i18n);
+        return true;
+    });
 #else
     joyconInputMode->setVisibility(Visibility::GONE);
     joyconPairGyroMode->setVisibility(Visibility::GONE);
+    joyconCalibrate->setVisibility(Visibility::GONE);
 #endif
 
     swapStickToDpad->init("settings/swap_stick_to_dpad"_i18n, Settings::instance().swap_joycon_stick_to_dpad(),
