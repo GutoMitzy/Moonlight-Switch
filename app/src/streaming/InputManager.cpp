@@ -465,10 +465,11 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
     }
 
     short mappedControllersCount = controllersToMap();
+    const bool controllerSetChanged = announcedControllerCount != controllersCount;
 
     // The host needs type/capabilities again for every new stream, even when
     // no buttons changed and the controller count stayed the same.
-    if (announcedControllerCount != controllersCount) {
+    if (controllerSetChanged) {
         const int previousControllerCount = newStream
             ? 0
             : std::max(announcedControllerCount, 0);
@@ -503,7 +504,7 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
     for (int i = 0; i < controllersCount; i++) {
         GamepadState gamepadState = getControllerState(i, specialKey);
 
-        if (newStream || !gamepadState.is_equal(lastGamepadStates[i])) {
+        if (newStream || controllerSetChanged || !gamepadState.is_equal(lastGamepadStates[i])) {
             lastGamepadStates[i] = gamepadState;
 
             if (LiSendMultiControllerEvent(
