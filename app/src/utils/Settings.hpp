@@ -327,6 +327,8 @@ class Settings : public Singleton<Settings> {
 #ifdef __SWITCH__
     const brls::HalfJoyConMapping& get_halfcon_mapping(brls::HalfJoyConSide side) const;
     void set_halfcon_mapping(brls::HalfJoyConSide side, const brls::HalfJoyConMapping& mapping);
+    void set_joycon_paired_mode(bool enabled);
+    [[nodiscard]] bool joycon_paired_mode() const { return m_joycon_paired_mode; }
 #endif
 
     std::vector<KeyMappingLayout>* get_mapping_laouts() { return &m_mapping_laouts; }
@@ -390,6 +392,7 @@ class Settings : public Singleton<Settings> {
     std::array<brls::HalfJoyConMapping, 2> m_halfcon_mappings
         = { brls::defaultHalfJoyConMapping(brls::HalfJoyConSide::LEFT),
               brls::defaultHalfJoyConMapping(brls::HalfJoyConSide::RIGHT) };
+    bool m_joycon_paired_mode = false;
 #endif
     std::vector<KeyMappingLayout> m_mapping_laouts;
     KeyComboOptions m_guide_key_options {

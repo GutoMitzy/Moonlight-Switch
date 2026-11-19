@@ -3,6 +3,9 @@ name: Switch
 on:
   workflow_call:
   workflow_dispatch:
+  push:
+    branches:
+      - joycon-gyro-sensor-isolation-v3
 
 permissions:
   contents: read

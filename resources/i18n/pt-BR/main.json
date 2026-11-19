@@ -206,5 +206,8 @@
         "favorites": "Favoritos",
         "settings": "Configurações"
     },
-    "title": "Moonlight"
+    "title": "Moonlight",
+    "joycon_input_mode": "Modo de entrada dos Joy-Con",
+    "joycon_input_separate": "Separados (dois controles)",
+    "joycon_input_paired": "Em par (um controle completo)"
 }
