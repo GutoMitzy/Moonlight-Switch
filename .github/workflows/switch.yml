@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - joycon-gyro-sensor-isolation-v3
+      - joycon-pair-gyro
 
 permissions:
   contents: read

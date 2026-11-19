@@ -598,8 +598,20 @@ SettingsTab::SettingsTab() {
     joyconInputMode->getEvent()->subscribe([](int selected) {
         Settings::instance().set_joycon_paired_mode(selected == 1);
     });
+
+    joyconPairGyroMode->setText("settings/joycon_pair_gyro_mode"_i18n);
+    joyconPairGyroMode->setData({
+        "settings/joycon_pair_gyro_right"_i18n,
+        "settings/joycon_pair_gyro_left"_i18n,
+        "settings/joycon_pair_gyro_both"_i18n
+    });
+    joyconPairGyroMode->setSelection(Settings::instance().joycon_pair_gyro_mode());
+    joyconPairGyroMode->getEvent()->subscribe([](int selected) {
+        Settings::instance().set_joycon_pair_gyro_mode(selected);
+    });
 #else
     joyconInputMode->setVisibility(Visibility::GONE);
+    joyconPairGyroMode->setVisibility(Visibility::GONE);
 #endif
 
     swapStickToDpad->init("settings/swap_stick_to_dpad"_i18n, Settings::instance().swap_joycon_stick_to_dpad(),

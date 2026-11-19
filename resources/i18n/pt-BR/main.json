@@ -170,6 +170,13 @@
         "rcas_sharpening": "Nitidez RCAS",
         "rumble_force": "Rumble force",
         "single_joycon": "Single Joycon",
+        "joycon_input_mode": "Modo de entrada dos Joy-Con",
+        "joycon_input_separate": "Separados (dois controles)",
+        "joycon_input_paired": "Em par (um controle completo)",
+        "joycon_pair_gyro_mode": "Gyro dos Joy-Con em par",
+        "joycon_pair_gyro_right": "Joy-Con direito",
+        "joycon_pair_gyro_left": "Joy-Con esquerdo",
+        "joycon_pair_gyro_both": "Ambos (controle extra só com gyro)",
         "stream_settings": "Configurações de stream",
         "swap_mouse_keys": "Mudar mouse  e   botões",
         "swap_mouse_scroll": "Mudar direção do scroll vertical do mouse",
@@ -206,8 +213,5 @@
         "favorites": "Favoritos",
         "settings": "Configurações"
     },
-    "title": "Moonlight",
-    "joycon_input_mode": "Modo de entrada dos Joy-Con",
-    "joycon_input_separate": "Separados (dois controles)",
-    "joycon_input_paired": "Em par (um controle completo)"
+    "title": "Moonlight"
 }

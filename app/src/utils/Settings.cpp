@@ -190,7 +190,8 @@ void Settings::load() {
 #ifdef __SWITCH__
         if (json_t* half = json_object_get(root, "halfcon_mapping"))
         {
-            if (json_integer_value(json_object_get(half, "version")) == 1)
+            const auto halfVersion = json_integer_value(json_object_get(half, "version"));
+            if (halfVersion == 1 || halfVersion == 2)
             {
                 const char* names[] = { "left", "right" };
                 for (int side = 0; side < 2; ++side)
@@ -202,7 +203,12 @@ void Settings::load() {
                         if (json_is_integer(value))
                         {
                             const auto action = json_integer_value(value);
-                            if (action >= -1 && action < brls::BUTTON_NAV_UP)
+                            // Version 1 stored the old default (unmapped) for L/ZL (R/ZR): keep the
+                            // current default instead, otherwise those buttons stay dead after an update
+                            const bool legacyUnmappedShoulder = halfVersion == 1 && action == -1
+                                && (key == static_cast<size_t>(brls::HalfJoyConButton::SHOULDER)
+                                    || key == static_cast<size_t>(brls::HalfJoyConButton::TRIGGER));
+                            if (!legacyUnmappedShoulder && action >= -1 && action < brls::BUTTON_NAV_UP)
                                 m_halfcon_mappings[side][key] = static_cast<int>(action);
                         }
                     }
@@ -399,6 +405,11 @@ void Settings::load() {
 #ifdef __SWITCH__
             if (json_t* joycon_paired_mode = json_object_get(settings, "joycon_paired_mode"))
                 m_joycon_paired_mode = json_typeof(joycon_paired_mode) == JSON_TRUE;
+            if (json_t* joycon_pair_gyro_mode = json_object_get(settings, "joycon_pair_gyro_mode")) {
+                const auto mode = json_integer_value(joycon_pair_gyro_mode);
+                if (mode >= 0 && mode <= 2)
+                    m_joycon_pair_gyro_mode = static_cast<int>(mode);
+            }
 #endif
 
             if (json_t* touchscreen_mouse_mode = json_object_get(settings, "touchscreen_mouse_mode")) {
@@ -576,6 +587,7 @@ void Settings::load() {
     set_halfcon_mapping(brls::HalfJoyConSide::LEFT, m_halfcon_mappings[0]);
     set_halfcon_mapping(brls::HalfJoyConSide::RIGHT, m_halfcon_mappings[1]);
     set_joycon_paired_mode(m_joycon_paired_mode);
+    set_joycon_pair_gyro_mode(m_joycon_pair_gyro_mode);
 #endif
 }
 
@@ -596,6 +608,13 @@ void Settings::set_halfcon_mapping(brls::HalfJoyConSide side, const brls::HalfJo
         ->setHalfJoyConMapping(side, target);
 }
 
+void Settings::set_joycon_pair_gyro_mode(int mode)
+{
+    m_joycon_pair_gyro_mode = mode >= 0 && mode <= 2 ? mode : 0;
+    static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager())
+        ->setJoyConPairGyroMode(static_cast<brls::JoyConPairGyroMode>(m_joycon_pair_gyro_mode));
+}
+
 void Settings::set_joycon_paired_mode(bool enabled)
 {
     m_joycon_paired_mode = enabled;
@@ -613,7 +632,7 @@ void Settings::save()
     {
 #ifdef __SWITCH__
         json_t* half = json_object();
-        json_object_set_new(half, "version", json_integer(1));
+        json_object_set_new(half, "version", json_integer(2));
         const char* names[] = { "left", "right" };
         for (size_t side = 0; side < m_halfcon_mappings.size(); ++side)
         {
@@ -678,6 +697,7 @@ void Settings::save()
             json_object_set_new(settings, "swap_joycon_stick_to_dpad", m_swap_joycon_stick_to_dpad ? json_true() : json_false());
 #ifdef __SWITCH__
             json_object_set_new(settings, "joycon_paired_mode", m_joycon_paired_mode ? json_true() : json_false());
+            json_object_set_new(settings, "joycon_pair_gyro_mode", json_integer(m_joycon_pair_gyro_mode));
 #endif
             json_object_set_new(settings, "touchscreen_mouse_mode", m_touchscreen_mouse_mode ? json_true() : json_false());
             json_object_set_new(settings, "swap_mouse_keys", m_swap_mouse_keys ? json_true() : json_false());

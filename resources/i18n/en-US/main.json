@@ -170,6 +170,13 @@
         "rcas_sharpening": "RCAS sharpening",
         "rumble_force": "Rumble force",
         "single_joycon": "Single Joycon",
+        "joycon_input_mode": "Joy-Con input mode",
+        "joycon_input_separate": "Separate (two controllers)",
+        "joycon_input_paired": "Paired (one full controller)",
+        "joycon_pair_gyro_mode": "Paired Joy-Con gyro",
+        "joycon_pair_gyro_right": "Right Joy-Con",
+        "joycon_pair_gyro_left": "Left Joy-Con",
+        "joycon_pair_gyro_both": "Both (extra gyro-only controller)",
         "stream_settings": "Stream settings",
         "swap_mouse_keys": "Swap mouse  and  buttons",
         "swap_mouse_scroll": "Swap mouse vertical scrolling direction",
@@ -206,8 +213,5 @@
         "favorites": "Favorites",
         "settings": "Settings"
     },
-    "title": "Moonlight",
-    "joycon_input_mode": "Joy-Con input mode",
-    "joycon_input_separate": "Separate (two controllers)",
-    "joycon_input_paired": "Paired (one full controller)"
+    "title": "Moonlight"
 }
