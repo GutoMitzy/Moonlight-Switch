@@ -188,6 +188,42 @@ void Settings::load() {
     if (root && json_typeof(root) == JSON_OBJECT)
     {
 #ifdef __SWITCH__
+        if (json_t* motion = json_object_get(root, "motion_calibration"))
+        {
+            if (json_integer_value(json_object_get(motion, "version")) == 1)
+            {
+                auto* input = static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager());
+                const char* names[] = { "left", "right" };
+                for (int side = 0; side < 2; side++)
+                {
+                    json_t* stored = json_object_get(motion, names[side]);
+                    if (!json_is_object(stored) || !json_is_true(json_object_get(stored, "valid")))
+                        continue;
+                    json_t* bias = json_object_get(stored, "gyro_bias");
+                    json_t* gravity = json_object_get(stored, "gravity_reference");
+                    if (!json_is_array(bias) || !json_is_array(gravity)
+                        || json_array_size(bias) != 3 || json_array_size(gravity) != 3)
+                        continue;
+                    brls::SwitchInputManager::MotionCalibration calibration;
+                    calibration.valid = true;
+                    for (int k = 0; k < 3; k++)
+                    {
+                        json_t* b = json_array_get(bias, k);
+                        json_t* g = json_array_get(gravity, k);
+                        if (!json_is_number(b) || !json_is_number(g))
+                        {
+                            calibration.valid = false;
+                            break;
+                        }
+                        calibration.gyroBias[k] = static_cast<float>(json_number_value(b));
+                        calibration.gravityReference[k] = static_cast<float>(json_number_value(g));
+                    }
+                    if (calibration.valid)
+                        input->setMotionCalibration(side == 0 ? brls::HalfJoyConSide::LEFT
+                                                              : brls::HalfJoyConSide::RIGHT, calibration);
+                }
+            }
+        }
         if (json_t* half = json_object_get(root, "halfcon_mapping"))
         {
             const auto halfVersion = json_integer_value(json_object_get(half, "version"));
@@ -631,6 +667,28 @@ void Settings::save()
     if (root)
     {
 #ifdef __SWITCH__
+        json_t* motion = json_object();
+        json_object_set_new(motion, "version", json_integer(1));
+        auto* input = static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager());
+        const char* calibrationNames[] = { "left", "right" };
+        for (int side = 0; side < 2; side++)
+        {
+            const auto calibration = input->getMotionCalibration(side == 0
+                ? brls::HalfJoyConSide::LEFT : brls::HalfJoyConSide::RIGHT);
+            json_t* stored = json_object();
+            json_object_set_new(stored, "valid", calibration.valid ? json_true() : json_false());
+            json_t* bias = json_array();
+            json_t* gravity = json_array();
+            for (int k = 0; k < 3; k++)
+            {
+                json_array_append_new(bias, json_real(calibration.gyroBias[k]));
+                json_array_append_new(gravity, json_real(calibration.gravityReference[k]));
+            }
+            json_object_set_new(stored, "gyro_bias", bias);
+            json_object_set_new(stored, "gravity_reference", gravity);
+            json_object_set_new(motion, calibrationNames[side], stored);
+        }
+        json_object_set_new(root, "motion_calibration", motion);
         json_t* half = json_object();
         json_object_set_new(half, "version", json_integer(2));
         const char* names[] = { "left", "right" };
