@@ -135,6 +135,9 @@
             <brls:SelectorCell
                 id="joycon_pair_gyro_mode"/>
 
+            <brls:DetailCell
+                id="joycon_calibrate"/>
+
             <brls:BooleanCell
                 id="swap_stick_to_dpad"/>
 
