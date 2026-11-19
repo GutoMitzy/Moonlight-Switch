@@ -611,7 +611,11 @@ SettingsTab::SettingsTab() {
     });
 
     joyconCalibrate->setText("settings/joycon_calibrate"_i18n);
-    joyconCalibrate->setDetailText("settings/joycon_calibrate_instructions"_i18n);
+    auto* motionInput = static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager());
+    const bool calibrated = motionInput->getMotionCalibration(brls::HalfJoyConSide::LEFT).valid
+        && motionInput->getMotionCalibration(brls::HalfJoyConSide::RIGHT).valid;
+    joyconCalibrate->setDetailText(calibrated ? "settings/joycon_calibrate_success"_i18n
+                                            : "settings/joycon_calibrate_instructions"_i18n);
     joyconCalibrate->registerClickAction([this](View*) {
         auto* input = static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager());
         const bool ok = input->calibrateJoyConsOnFlatSurface();
