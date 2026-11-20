@@ -23,6 +23,7 @@ on:
       - joycon-home-gyro-mouse-stability-v11
       - joycon-pointer-orientation-anchor-v12
       - joycon-gyro-mouse-stable-mapping-v13
+      - joycon-gyro-evidence-v15
 
 permissions:
   contents: read
@@ -100,6 +101,20 @@ jobs:
             extern/borealis/tests/stable_joycon_slots_test.cpp \
             -o /tmp/stable_joycon_slots_test
           /tmp/stable_joycon_slots_test
+
+      - name: Validate optional gyro motion CSV trace writer
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/motion_trace_csv_test.cpp \
+            -o /tmp/motion_trace_csv_test
+          /tmp/motion_trace_csv_test
+
+      - name: Validate motion CSV schemas and offline analysis
+        if: matrix.platform == 'switch1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_motion_trace_*.py' -v
 
       - name: Run cmake
         if: matrix.platform == 'switch1'
