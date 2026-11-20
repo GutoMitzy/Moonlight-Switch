@@ -1,4 +1,6 @@
 #pragma once
+#include <cmath>
+#include <algorithm>
 
 #include "Singleton.hpp"
 #include <borealis.hpp>
@@ -247,6 +249,11 @@ class Settings : public Singleton<Settings> {
     void set_sops(bool sops) { m_sops = sops; }
     [[nodiscard]] bool sops() const { return m_sops; }
 
+    void set_gyro_sensitivity(float sensitivity) {
+        m_gyro_sensitivity = std::isfinite(sensitivity) ? std::clamp(sensitivity, 0.25f, 1.5f) : 1.0f;
+    }
+    [[nodiscard]] float gyro_sensitivity() const { return m_gyro_sensitivity; }
+
     void set_play_audio(bool play_audio) { m_play_audio = play_audio; }
     [[nodiscard]] bool play_audio() const { return m_play_audio; }
 
@@ -370,6 +377,7 @@ class Settings : public Singleton<Settings> {
     int m_frames_queue_size = 3;
     bool m_sops = false;
     bool m_play_audio = false;
+    float m_gyro_sensitivity = 1.0f;
     bool m_write_log = false;
     bool m_swap_ui_keys = false;
     bool m_swap_joycon_stick_to_dpad = false;
