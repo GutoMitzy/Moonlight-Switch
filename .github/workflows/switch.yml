@@ -18,6 +18,7 @@ on:
       - joycon-pointer-smooth-center-v6
       - joycon-pointer-stable-right-v7
       - switch-dock-resolution-refresh-v8
+      - switch-dock-video-physical-pixels-v9
 
 permissions:
   contents: read
