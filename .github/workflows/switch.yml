@@ -14,6 +14,7 @@ on:
       - joycon-gyro-pointer-overlay-fix-v2
       - joycon-nav-gyro-pointer-v3
       - joycon-ui-action-lifetime-fix-v4
+      - joycon-pointer-aim-vertical-menus-v5
 
 permissions:
   contents: read
