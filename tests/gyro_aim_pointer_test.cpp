@@ -57,8 +57,19 @@ int main() {
         assert(x == 0.5f && y == 0.5f);
     }
     assert(aim.update(0.0f, 0.09f, 0.0f, 0.01f, 1.0f, x, y));
-    assert(x == 0.5f && y == 0.5f);
+    assert(x < 0.5f);
+    const float firstMotionX = x;
     assert(aim.update(0.0f, 0.09f, 0.0f, 0.01f, 1.0f, x, y));
+    assert(x < firstMotionX);
+
+    aim.reset();
+    for (int i = 0; i < 5000; ++i) {
+        assert(aim.update(0.003f, 0.005f, 0.002f, 0.005f, 1.0f, x, y));
+        assert(x == 0.5f && y == 0.5f);
+    }
+
+    aim.reset();
+    assert(aim.update(0.0f, 0.035f, 0.0f, 0.005f, 1.0f, x, y));
     assert(x < 0.5f);
 
     aim.reset();
