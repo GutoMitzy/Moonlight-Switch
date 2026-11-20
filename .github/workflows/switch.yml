@@ -25,6 +25,7 @@ on:
       - joycon-gyro-mouse-stable-mapping-v13
       - joycon-gyro-evidence-v15
       - joycon-mapping-evidence-v16
+      - joycon-validation-no-build-v17
 
 permissions:
   contents: read
