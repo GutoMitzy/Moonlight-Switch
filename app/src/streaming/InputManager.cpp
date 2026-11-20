@@ -148,6 +148,9 @@ MoonlightInputManager::MoonlightInputManager() {
 #endif
             const int result = LiSendControllerMotionEvent(
                 static_cast<uint8_t>(event.controllerIndex), type, x, y, z);
+#ifndef __SWITCH__
+            (void)result;
+#endif
 #ifdef __SWITCH__
             if (tracingNetwork)
                 networkTrace.write("%llu,%d,%u,%u,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.4f,%d",
