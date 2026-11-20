@@ -48,6 +48,20 @@ int main() {
     assert(std::fabs(y - 0.5f) < 0.001f);
 
     aim.reset();
+    aim.setAcceleration(0.0f, 0.0f, -9.80665f);
+    for (int i = 0; i < 50; ++i)
+        assert(aim.update(0.0f, 0.0f, 0.0f, 0.01f, 1.0f, x, y));
+    aim.setAcceleration(0.0f, -1.8f, -9.64f);
+    for (int i = 0; i < 300; ++i) {
+        assert(aim.update(0.0f, 0.0f, 0.0f, 0.01f, 1.0f, x, y));
+        assert(x == 0.5f && y == 0.5f);
+    }
+    assert(aim.update(0.0f, 0.09f, 0.0f, 0.01f, 1.0f, x, y));
+    assert(x == 0.5f && y == 0.5f);
+    assert(aim.update(0.0f, 0.09f, 0.0f, 0.01f, 1.0f, x, y));
+    assert(x < 0.5f);
+
+    aim.reset();
     assert(!aim.update(std::numeric_limits<float>::quiet_NaN(),
                        0.0f, 0.0f, 0.01f, 1.0f, x, y));
     assert(!aim.update(0.0f, 1.0f, 0.0f, 0.15f, 1.0f, x, y));
