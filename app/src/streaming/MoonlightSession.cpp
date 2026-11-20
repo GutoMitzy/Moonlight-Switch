@@ -101,8 +101,10 @@ void MoonlightSession::connection_started() {
     if (!m_active_session)
         return;
 
+    if (m_active_session->m_stop_requested)
+        return;
+
     MoonlightInputManager::instance().resetControllerState();
-    m_active_session->m_stop_requested = false;
     m_active_session->m_is_active = true;
 }
 
@@ -405,6 +407,7 @@ void MoonlightSession::stop(int terminate_app) {
         return;
 
     m_is_active = false;
+    m_restart_pending = false;
 
     if (terminate_app) {
         GameStreamClient::instance().quit(m_address, [](auto _) {});
