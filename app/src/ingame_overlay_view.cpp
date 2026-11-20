@@ -273,6 +273,18 @@ OptionsTab::OptionsTab(StreamingView* streamView) : streamView(streamView) {
         Settings::instance().save();
     });
     gyroSensitivitySlider->setProgress((initialGyroSensitivity - 0.25f) / 1.25f);
+#ifdef PLATFORM_SWITCH
+    gyroManualCalibration->setText("settings/gyro_manual_calibration"_i18n);
+    gyroManualCalibration->registerClickAction([](View*) {
+        auto* switchInput = static_cast<SwitchInputManager*>(
+            Application::getPlatform()->getInputManager());
+        switchInput->requestSixAxisManualCalibration();
+        return true;
+    });
+#else
+    gyroManualCalibration->setVisibility(Visibility::GONE);
+#endif
+
 
     pcAudio->init("settings/paop"_i18n, Settings::instance().play_audio(),
                   [](bool value) {
