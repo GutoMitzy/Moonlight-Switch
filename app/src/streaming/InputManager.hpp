@@ -61,6 +61,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     void updateTouchScreenPanDelta(brls::PanGestureStatus panStatus);
     void reloadButtonMappingLayout();
     void setInputEnabled(bool enabled) { inputEnabled = enabled; }
+    void setGyroMouseActive(bool active);
     static void leftMouseClick();
     static void rightMouseClick();
 
@@ -90,6 +91,10 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     std::chrono::steady_clock::time_point lastDesktopScrollEvent;
     bool inputDropped = false;
     bool inputEnabled = true;
+    bool gyroMouseActive = false;
+    int gyroMouseController = -1;
+    std::chrono::steady_clock::time_point gyroMouseLastSample = {};
+
     std::atomic<bool> resetControllers = true;
     int announcedControllerCount = -1;
 
