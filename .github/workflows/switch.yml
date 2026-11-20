@@ -116,6 +116,14 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -p 'test_motion_trace_*.py' -v
 
+      - name: Verify persistent virtual pad seats
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/stable_virtual_gamepad_count_test.cpp \
+            -o /tmp/stable_virtual_gamepad_count_test
+          /tmp/stable_virtual_gamepad_count_test
+
       - name: Run cmake
         if: matrix.platform == 'switch1'
         continue-on-error: true
