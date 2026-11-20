@@ -139,6 +139,9 @@
                 id="joycon_calibrate"/>
 
             <brls:BooleanCell
+                id="joycon_dsu"/>
+
+            <brls:BooleanCell
                 id="swap_stick_to_dpad"/>
 
             <brls:Header
