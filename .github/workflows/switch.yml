@@ -15,6 +15,7 @@ on:
       - joycon-nav-gyro-pointer-v3
       - joycon-ui-action-lifetime-fix-v4
       - joycon-pointer-aim-vertical-menus-v5
+      - joycon-pointer-smooth-center-v6
 
 permissions:
   contents: read
