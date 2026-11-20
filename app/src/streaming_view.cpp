@@ -352,7 +352,17 @@ void StreamingView::draw(NVGcontext* vg, float x, float y, float width,
         return;
     }
 
+#if defined(PLATFORM_SWITCH) && !defined(__SWITCH2__)
+    // Deko3D renders directly to the physical framebuffer; Borealis view
+    // dimensions are logical coordinates scaled by Application::windowScale.
+    // Use actual output pixels or docked 1920x1080 is drawn in a 1280x720 corner.
+    const int videoWidth = static_cast<int>(Application::windowWidth);
+    const int videoHeight = static_cast<int>(Application::windowHeight);
+    session->draw(vg, videoWidth > 0 ? videoWidth : static_cast<int>(width),
+                  videoHeight > 0 ? videoHeight : static_cast<int>(height));
+#else
     session->draw(vg, (int) width, (int) height);
+#endif
 
     if (!tempInputLock && session->is_active())
         handleInput();
