@@ -177,6 +177,8 @@
         "joycon_pair_gyro_right": "Joy-Con direito",
         "joycon_pair_gyro_left": "Joy-Con esquerdo",
         "joycon_pair_gyro_both": "Ambos (controle extra só com gyro)",
+        "joycon_dsu": "Motion DSU UDP (Fritchii, porta 26760)",
+        "joycon_dsu_failed": "Não foi possível iniciar o servidor DSU UDP",
         "joycon_calibrate": "Calibrar movimento dos Joy-Con",
         "joycon_calibrate_instructions": "Apoie ambos com os botões para cima e selecione para calibrar (2 s)",
         "joycon_calibrate_success": "Calibração salva para os dois Joy-Con",
