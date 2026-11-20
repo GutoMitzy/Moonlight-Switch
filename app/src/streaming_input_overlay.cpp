@@ -130,15 +130,14 @@ void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
             y = 0;
 
         if (gyroMouseEnabled) {
-            const auto delta = MoonlightInputManager::instance().consumeGyroMouseDelta();
-            gyroMouseSubpixelX += delta.x;
-            gyroMouseSubpixelY += delta.y;
-            const int dx = static_cast<int>(std::trunc(gyroMouseSubpixelX));
-            const int dy = static_cast<int>(std::trunc(gyroMouseSubpixelY));
-            if (dx != 0 || dy != 0) {
-                gyroMouseSubpixelX -= dx;
-                gyroMouseSubpixelY -= dy;
-                LiSendMouseMoveEvent(dx, dy);
+            auto cursor = MoonlightInputManager::instance().consumeGyroMousePosition();
+            if (cursor && Application::contentWidth > 0 &&
+                Application::contentHeight > 0) {
+                LiSendMousePositionEvent(
+                    cursor->x * Application::contentWidth,
+                    cursor->y * Application::contentHeight,
+                    Application::contentWidth,
+                    Application::contentHeight);
             }
         }
 
