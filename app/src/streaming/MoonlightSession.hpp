@@ -97,6 +97,7 @@ class MoonlightSession {
     bool m_suspended = false;
     bool m_invalidate_renderer_pending = false;
     bool m_restart_pending = false;
+    bool m_restart_in_progress = false;
     bool m_use_hdr = false;
 
     SessionStats m_session_stats = {};
