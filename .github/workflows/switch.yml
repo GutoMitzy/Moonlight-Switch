@@ -26,6 +26,7 @@ on:
       - joycon-gyro-evidence-v15
       - joycon-mapping-evidence-v16
       - joycon-validation-no-build-v17
+      - joycon-dock-motion-reliability-v18
 
 permissions:
   contents: read
