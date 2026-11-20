@@ -38,7 +38,8 @@ public:
     }
 
     bool update(float gx, float gy, float gz, float dt, float zoom,
-                float& normalizedX, float& normalizedY) {
+                float& normalizedX, float& normalizedY,
+                bool hardwareAtRest = false) {
         if (!std::isfinite(gx) || !std::isfinite(gy) ||
             !std::isfinite(gz) || !std::isfinite(dt) ||
             !std::isfinite(zoom))
@@ -62,8 +63,11 @@ public:
         const float weight = std::clamp(
             (angularSpeed - noiseFloor) / (fullResponse - noiseFloor),
             0.0f, 1.0f);
-        moving = weight > 0.0f;
-        const Vec3 target = angularRate * weight;
+        // A HID-confirmed resting controller must not drift because of
+        // residual sensor bias. Ignore low-speed residuals only while at rest.
+        moving = weight > 0.0f &&
+                 !(hardwareAtRest && angularSpeed < 0.05f);
+        const Vec3 target = angularRate * (moving ? weight : 0.0f);
 
         // Fast intentional turns receive the raw sample to avoid adding
         // filter delay. Micro-adjustments receive a short low-pass filter.
