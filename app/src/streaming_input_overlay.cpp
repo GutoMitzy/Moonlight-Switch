@@ -245,9 +245,22 @@ void StreamingInputOverlay::populateHintWithDefaultItems() {
                                                 return true;
                                             }));
 
-    actionsToFree.push_back(registerAction("mouse_input/mouse"_i18n,
+    actionsToFree.push_back(registerAction("mouse_input/recenter"_i18n,
                                            ControllerButton::BUTTON_LSB,
-                                           [](View* view) { return true; }));
+                                           [this](View*) {
+                                               if (!gyroMouseEnabled)
+                                                   return true;
+                                               gyroMouseSubpixelX = 0.0f;
+                                               gyroMouseSubpixelY = 0.0f;
+                                               MoonlightInputManager::instance().setGyroMouseActive(true);
+                                               if (Application::contentWidth > 0 && Application::contentHeight > 0)
+                                                   LiSendMousePositionEvent(
+                                                       Application::contentWidth / 2,
+                                                       Application::contentHeight / 2,
+                                                       Application::contentWidth,
+                                                       Application::contentHeight);
+                                               return true;
+                                           }));
 
     actionsToFree.push_back(registerAction("mouse_input/scroll"_i18n,
                                            ControllerButton::BUTTON_RSB,
