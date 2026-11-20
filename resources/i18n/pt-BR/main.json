@@ -104,6 +104,7 @@
         "title": "Mapear editor de layout"
     },
     "mouse_input": {
+        "recenter": "Recentralizar ponteiro (clique no analógico)",
         "gyro_pointer": "Ponteiro por giroscópio (Y): ligar/desligar",
         "delete": "Del",
         "hide": "Hide hints",
