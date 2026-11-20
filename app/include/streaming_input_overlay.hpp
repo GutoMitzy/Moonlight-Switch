@@ -14,6 +14,7 @@
 class StreamingInputOverlay : public brls::Box {
   public:
     StreamingInputOverlay(StreamingView* streamView);
+    ~StreamingInputOverlay() override;
 
     void show();
 
@@ -28,6 +29,7 @@ class StreamingInputOverlay : public brls::Box {
     KeyboardView* keyboard = nullptr;
     bool isKeyboardOpen = false;
     bool hideHints = false;
+    bool gyroMouseEnabled = false;
 
     void toggleKeyboard();
     void refreshKeyboard();
