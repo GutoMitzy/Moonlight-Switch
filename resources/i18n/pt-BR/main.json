@@ -115,6 +115,7 @@
         "title": "Modo mouse"
     },
     "settings": {
+        "gyro_manual_calibration": "Calibrar giroscópios (controles parados)",
         "gyro_sensitivity": "Sensibilidade do giroscópio",
         "joycon_input_mode": "Modo de entrada dos Joy-Con",
         "joycon_input_separate": "Separados (dois controles)",
