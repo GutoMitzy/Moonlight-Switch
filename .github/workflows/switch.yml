@@ -8,6 +8,7 @@ on:
       - joycon-gyro-sensor-isolation-v3
       - joycon-motion-units-drift-fix
       - joycon-motion-stability-overlay-v2
+      - joycon-gyro-stability-exit-audio-v3
 
 permissions:
   contents: read
