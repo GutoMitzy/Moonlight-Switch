@@ -400,9 +400,16 @@ void MoonlightInputManager::dropInput() {
         controllersCount = GAMEPADS_MAX;
     }
 
+#ifdef __SWITCH__
+    if (!Settings::instance().joycon_paired_mode() &&
+        announcedControllerCount > controllersCount)
+        controllersCount = announcedControllerCount;
+#endif
+    const short activeMask = controllersCount > 0
+        ? static_cast<short>((1U << controllersCount) - 1U) : 0;
     for (short i = 0; i < controllersCount; i++) {
         res &= LiSendMultiControllerEvent(
-                   i, controllersToMap(), gamepadState.buttonFlags,
+                   i, activeMask, gamepadState.buttonFlags,
                    gamepadState.leftTrigger, gamepadState.rightTrigger,
                    gamepadState.leftStickX, gamepadState.leftStickY,
                    gamepadState.rightStickX, gamepadState.rightStickY) == 0;
@@ -552,7 +559,15 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
         controllersCount = GAMEPADS_MAX;
     }
 
-    short mappedControllersCount = controllersToMap();
+#ifdef __SWITCH__
+    // Keep already-announced virtual devices alive across transient Joy-Con
+    // disconnects so SDL device port assignments in the emulator do not shift.
+    if (!newStream && !Settings::instance().joycon_paired_mode() &&
+        announcedControllerCount > controllersCount)
+        controllersCount = announcedControllerCount;
+#endif
+    const short mappedControllersCount = controllersCount > 0
+        ? static_cast<short>((1U << controllersCount) - 1U) : 0;
     const bool controllerSetChanged = announcedControllerCount != controllersCount;
 
     // The host needs type/capabilities again for every new stream, even when
