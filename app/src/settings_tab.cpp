@@ -610,6 +610,14 @@ SettingsTab::SettingsTab() {
         Settings::instance().set_joycon_pair_gyro_mode(selected);
     });
 
+    joyconDsu->init("settings/joycon_dsu"_i18n, Settings::instance().joycon_dsu_enabled(),
+        [](bool enabled) {
+            if (!Settings::instance().set_joycon_dsu_enabled(enabled))
+                Application::notify("settings/joycon_dsu_failed"_i18n);
+            else
+                Settings::instance().save();
+        });
+
     joyconCalibrate->setText("settings/joycon_calibrate"_i18n);
     auto* motionInput = static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager());
     const bool calibrated = motionInput->getMotionCalibration(brls::HalfJoyConSide::LEFT).valid
@@ -631,6 +639,7 @@ SettingsTab::SettingsTab() {
     joyconInputMode->setVisibility(Visibility::GONE);
     joyconPairGyroMode->setVisibility(Visibility::GONE);
     joyconCalibrate->setVisibility(Visibility::GONE);
+    joyconDsu->setVisibility(Visibility::GONE);
 #endif
 
     swapStickToDpad->init("settings/swap_stick_to_dpad"_i18n, Settings::instance().swap_joycon_stick_to_dpad(),
