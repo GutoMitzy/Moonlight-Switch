@@ -261,6 +261,19 @@ OptionsTab::OptionsTab(StreamingView* streamView) : streamView(streamView) {
     joyconInputMode->setVisibility(Visibility::GONE);
 #endif
 
+    auto refreshGyroSensitivity = [this](float sensitivity) {
+        gyroSensitivityHeader->setSubtitle(std::to_string(static_cast<int>(sensitivity * 100.0f + 0.5f)) + "%");
+    };
+    const float initialGyroSensitivity = Settings::instance().gyro_sensitivity();
+    refreshGyroSensitivity(initialGyroSensitivity);
+    gyroSensitivitySlider->getProgressEvent()->subscribe([this, refreshGyroSensitivity](float progress) {
+        const float gain = 0.25f + progress * 1.25f;
+        Settings::instance().set_gyro_sensitivity(gain);
+        refreshGyroSensitivity(Settings::instance().gyro_sensitivity());
+        Settings::instance().save();
+    });
+    gyroSensitivitySlider->setProgress((initialGyroSensitivity - 0.25f) / 1.25f);
+
     pcAudio->init("settings/paop"_i18n, Settings::instance().play_audio(),
                   [](bool value) {
                       Settings::instance().set_play_audio(value);
