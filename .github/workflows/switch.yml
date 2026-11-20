@@ -79,6 +79,20 @@ jobs:
             -o /tmp/sixaxis_quality_test
           /tmp/sixaxis_quality_test
 
+      - name: Validate bounded chronological motion sample processing
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/motion_sample_timing_test.cpp \
+            -o /tmp/motion_sample_timing_test
+          /tmp/motion_sample_timing_test
+
+      - name: Validate handheld vs docked motion report comparison
+        if: matrix.platform == 'switch1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_compare_dock_motion.py' -v
+
       - name: Validate gyro pointer stability
         if: matrix.platform == 'switch1'
         run: |
