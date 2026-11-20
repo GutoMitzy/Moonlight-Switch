@@ -73,6 +73,16 @@ int main() {
     assert(x < 0.5f);
 
     aim.reset();
+    for (int i = 0; i < 10000; ++i) {
+        assert(aim.update(0.021f, -0.014f, 0.007f,
+                          0.005f, 1.0f, x, y, true));
+        assert(x == 0.5f && y == 0.5f);
+    }
+    assert(aim.update(0.0f, 0.15f, 0.0f, 0.005f, 1.0f,
+                      x, y, true));
+    assert(x < 0.5f);
+
+    aim.reset();
     assert(!aim.update(std::numeric_limits<float>::quiet_NaN(),
                        0.0f, 0.0f, 0.01f, 1.0f, x, y));
     assert(!aim.update(0.0f, 1.0f, 0.0f, 0.15f, 1.0f, x, y));
