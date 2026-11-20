@@ -384,6 +384,10 @@ void Settings::load() {
             if (json_t* play_audio = json_object_get(settings, "play_audio")) {
                 m_play_audio = json_typeof(play_audio) == JSON_TRUE;
             }
+            if (json_t* adaptive_filter = json_object_get(settings, "gyro_mouse_adaptive_filter")) {
+                if (json_is_boolean(adaptive_filter))
+                    m_gyro_mouse_adaptive_filter = json_is_true(adaptive_filter);
+            }
             if (json_t* gyro_sensitivity = json_object_get(settings, "gyro_sensitivity")) {
                 if (json_is_number(gyro_sensitivity))
                     set_gyro_sensitivity(static_cast<float>(json_number_value(gyro_sensitivity)));
@@ -678,6 +682,8 @@ void Settings::save()
             json_object_set_new(settings, "sops", m_sops ? json_true() : json_false());
             json_object_set_new(settings, "play_audio", m_play_audio ? json_true() : json_false());
             json_object_set_new(settings, "gyro_sensitivity", json_real(m_gyro_sensitivity));
+            json_object_set_new(settings, "gyro_mouse_adaptive_filter",
+                                json_boolean(m_gyro_mouse_adaptive_filter));
             json_object_set_new(settings, "write_log", m_write_log ? json_true() : json_false());
             json_object_set_new(settings, "swap_ui_keys", m_swap_ui_keys ? json_true() : json_false());
             json_object_set_new(settings, "swap_joycon_stick_to_dpad", m_swap_joycon_stick_to_dpad ? json_true() : json_false());
