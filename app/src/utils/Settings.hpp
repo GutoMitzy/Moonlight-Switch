@@ -332,6 +332,8 @@ class Settings : public Singleton<Settings> {
     // 0 = right Joy-Con, 1 = left Joy-Con, 2 = both (extra gyro-only controller)
     void set_joycon_pair_gyro_mode(int mode);
     [[nodiscard]] int joycon_pair_gyro_mode() const { return m_joycon_pair_gyro_mode; }
+    bool set_joycon_dsu_enabled(bool enabled);
+    [[nodiscard]] bool joycon_dsu_enabled() const { return m_joycon_dsu_enabled; }
 #endif
 
     std::vector<KeyMappingLayout>* get_mapping_laouts() { return &m_mapping_laouts; }
@@ -397,6 +399,7 @@ class Settings : public Singleton<Settings> {
               brls::defaultHalfJoyConMapping(brls::HalfJoyConSide::RIGHT) };
     bool m_joycon_paired_mode = false;
     int m_joycon_pair_gyro_mode = 0;
+    bool m_joycon_dsu_enabled = false;
 #endif
     std::vector<KeyMappingLayout> m_mapping_laouts;
     KeyComboOptions m_guide_key_options {
