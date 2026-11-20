@@ -98,6 +98,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     bool gyroMouseActive = false;
     int gyroMouseController = -1;
     std::chrono::steady_clock::time_point gyroMouseLastSample = {};
+    std::chrono::steady_clock::time_point gyroMouseLastControllerCheck = {};
     std::optional<brls::Point> gyroMousePosition;
     GyroAimPointer gyroAimPointer;
     std::array<GyroCalibrationHold, GAMEPADS_MAX> gyroCalibrationHolds;
