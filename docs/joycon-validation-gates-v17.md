@@ -30,3 +30,17 @@ Base: `joycon-mapping-evidence-v16`. Esta branch não está nos gatilhos de `pus
 
 ### Gate
 Não publicar uma build como 'corrigida' enquanto não houver testes de host executados, resultado de compilação do alvo correspondente e uma rodada real em Switch + Sunshine + emulador. Indicar separadamente itens não testados. Não disparar builds em branches intermediárias.
+
+## Teste A/B específico: docked vs portátil
+
+**Não há validação física concluída.** Comparar com a mesma build, mesmo Joy-Con direito, mesma sensibilidade, mesmo jogo, mesmos FPS configurados no Moonlight e o mesmo Sunshine.
+
+1. Portátil com Joy-Cons acoplados: registrar 30 s imóveis, 20 movimentos lentos horizontais, 20 verticais e 10 retornos à pose inicial.
+2. Portátil com Joy-Cons destacados e conectados por Bluetooth, sem dock: repetir exatamente o protocolo. Essa etapa isola a diferença de transporte físico dos sensores.
+3. Docked com Joy-Cons sem fio, Switch e controle próximos, preferencialmente com as mesmas opções de resolução/FPS: repetir.
+4. Docked com vídeo reduzido a 720p e, depois, à resolução original: repetir. Essa etapa investiga influência de carga de decodificação/renderização.
+5. Para minimizar variações, alternar a ordem A/B/A e não modificar sensibilidade/calibração durante a comparação.
+
+Comparar p50/p95 de `sensor_dt_ms`, lacunas de sequência, RMS/pico em repouso, `local_hid_to_enqueue_ms`, rejeições de amostras, deslocamento de cursor parado e atraso visível. Os CSVs atuais não medem latência fim a fim ou recepção pelo emulador. É necessário vídeo externo sincronizado ou telemetria do PC para tais conclusões.
+
+Interpretação condicional: se portátil acoplado difere do portátil desacoplado, investigar transporte dos Joy-Cons e indexação; se ambos portáteis são equivalentes e docked piora, investigar carga de processamento, frequência de polling, radiofrequência/posicionamento do dock e pipeline de apresentação. Não atribuir automaticamente a diferença ao dock sem o controle portátil sem fio.
