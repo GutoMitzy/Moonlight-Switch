@@ -6,7 +6,7 @@ Na v17, `SwitchInputManager::handleControllerSensors()` era chamado pelo `runloo
 
 No modo de resolução automática, `MoonlightSession::start()` seleciona `Application::windowWidth/windowHeight`, o que pode resultar em streaming maior no dock. Isso não modifica diretamente a medição dos sensores, mas pode alterar carga e cadência de apresentação. A v18 **não altera a resolução configurada pelo usuário**.
 
-Além disso, o estado físico passa de `HidNpadIdType_Handheld` para controladores `NpadJoyDual/Left/Right` ao destacar Joy-Cons. O índice lógico do Joy-Con direito pode mudar: agora o ponteiro verifica o controle direito preferencial até uma vez por segundo e recentraliza somente se ocorrer alteração na seleção.
+Além disso, o estado físico passa de `HidNpadIdType_Handheld` para controladores `NpadJoyDual/Left/Right` ao destacar Joy-Cons. O índice lógico do Joy-Con direito pode mudar: agora o ponteiro verifica o controle preferencial até uma vez por segundo: sensor handheld quando os Joy-Cons estão encaixados e Joy-Con direito quando estão destacados. A referência é reiniciada somente se houver alteração na seleção, em ambos os sentidos da transição.
 
 ## Prevenção implementada
 
