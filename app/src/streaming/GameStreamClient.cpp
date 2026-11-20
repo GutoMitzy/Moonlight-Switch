@@ -745,7 +745,7 @@ void GameStreamClient::start(const std::string& address,
                 ->getInputManager()->getControllersConnectedCount();
             controllerCount = std::clamp(controllerCount, 0, 16);
             const int gamepadMask = controllerCount > 0
-                ? static_cast<int>((1U << controllerCount) - 1U) : 0;
+                ? static_cast<int>((1U << controllerCount) - 1U) : 1;
             brls::Logger::info("GameStream: launching with {} controllers (mask=0x{:x})",
                 controllerCount, gamepadMask);
             int status = gs_start_app(&m_server_data[cachedAddress], &m_config,
