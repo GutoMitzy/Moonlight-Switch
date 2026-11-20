@@ -161,6 +161,9 @@ void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
             scroll_y = 0;
 
         // Left mouse button
+        if (gyroMouseEnabled && ((l_pressed && !old_l_pressed) ||
+                                 (r_pressed && !old_r_pressed)))
+            MoonlightInputManager::instance().stabilizeGyroMouseClick();
         if (l_pressed != old_l_pressed) {
             old_l_pressed = l_pressed;
             auto lb = Settings::instance().swap_mouse_keys()
