@@ -14,6 +14,11 @@ public:
         hasReferenceGravity = false;
         moving = false;
         stationarySeconds = 0.0f;
+        startCandidateSeconds = 0.0f;
+        displayOffsetX = 0.0f;
+        displayOffsetY = 0.0f;
+        displayedX = 0.5f;
+        displayedY = 0.5f;
     }
 
     void setAcceleration(float x, float y, float z) {
@@ -43,6 +48,7 @@ public:
             filteredRate = {};
             moving = false;
             stationarySeconds = 0.0f;
+            startCandidateSeconds = 0.0f;
             return false;
         }
 
@@ -51,11 +57,21 @@ public:
         if (angularSpeed > 20.0f)
             return false;
 
-        constexpr float startThreshold = 0.047f;
-        constexpr float stopThreshold = 0.022f;
-        if (moving ? angularSpeed <= stopThreshold :
-                     angularSpeed >= startThreshold)
-            moving = !moving;
+        constexpr float startThreshold = 0.060f;
+        constexpr float stopThreshold = 0.032f;
+        if (moving) {
+            if (angularSpeed <= stopThreshold) {
+                moving = false;
+                startCandidateSeconds = 0.0f;
+            }
+        } else {
+            startCandidateSeconds = angularSpeed >= startThreshold
+                ? startCandidateSeconds + dt : 0.0f;
+            if (startCandidateSeconds >= 0.020f) {
+                moving = true;
+                startCandidateSeconds = 0.0f;
+            }
+        }
 
         const float alpha = -std::expm1(-dt * 30.0f);
         const Vec3 target = moving ? angularRate : Vec3{};
@@ -88,10 +104,21 @@ public:
 
         const Vec3 aim = rotate(orientation, {0.0f, 0.0f, 1.0f});
         const float depth = std::max(0.20f, aim.z);
-        constexpr float baseFocal = 0.94f;
+        constexpr float baseFocal = 0.89f;
         const float focal = baseFocal * std::clamp(zoom, 0.6f, 1.8f);
-        normalizedX = std::clamp(0.5f - aim.x / depth * focal, 0.0f, 1.0f);
-        normalizedY = std::clamp(0.5f + aim.y / depth * focal, 0.0f, 1.0f);
+        const float rawX = 0.5f - aim.x / depth * focal + displayOffsetX;
+        const float rawY = 0.5f + aim.y / depth * focal + displayOffsetY;
+        if (!moving) {
+            displayOffsetX += displayedX - rawX;
+            displayOffsetY += displayedY - rawY;
+            normalizedX = displayedX;
+            normalizedY = displayedY;
+        } else {
+            displayedX = std::clamp(rawX, 0.0f, 1.0f);
+            displayedY = std::clamp(rawY, 0.0f, 1.0f);
+            normalizedX = displayedX;
+            normalizedY = displayedY;
+        }
         return true;
     }
 
@@ -159,4 +186,9 @@ private:
     bool hasReferenceGravity = false;
     bool moving = false;
     float stationarySeconds = 0.0f;
+    float startCandidateSeconds = 0.0f;
+    float displayOffsetX = 0.0f;
+    float displayOffsetY = 0.0f;
+    float displayedX = 0.5f;
+    float displayedY = 0.5f;
 };
