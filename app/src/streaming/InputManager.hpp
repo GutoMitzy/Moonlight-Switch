@@ -96,6 +96,8 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     int gyroMouseController = -1;
     std::chrono::steady_clock::time_point gyroMouseLastSample = {};
     brls::Point gyroMousePending = {0, 0};
+    float gyroMouseFilteredX = 0.0f;
+    float gyroMouseFilteredY = 0.0f;
 
     std::atomic<bool> resetControllers = true;
     int announcedControllerCount = -1;
