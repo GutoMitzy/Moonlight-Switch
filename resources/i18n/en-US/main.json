@@ -115,6 +115,7 @@
         "title": "Mouse input mode"
     },
     "settings": {
+        "gyro_manual_calibration": "Calibrate gyroscopes (keep controllers still)",
         "gyro_sensitivity": "Gyroscope sensitivity",
         "joycon_input_mode": "Joy-Con input mode",
         "joycon_input_separate": "Separate (two controllers)",
