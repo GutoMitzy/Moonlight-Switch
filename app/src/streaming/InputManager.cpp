@@ -2,6 +2,7 @@
 #ifdef __SWITCH__
 #include <switch.h>
 #include <borealis/platforms/switch/switch_input.hpp>
+#include <borealis/platforms/switch/motion_trace_csv.hpp>
 #endif
 
 #include "InputManager.hpp"
@@ -92,6 +93,13 @@ MoonlightInputManager::MoonlightInputManager() {
                         gyroAimPointer.setAcceleration(event.data[0], event.data[1],
                                                        event.data[2]);
                     } else if (event.type == brls::SensorEventType::GYRO) {
+#ifdef __SWITCH__
+                        static brls::MotionTraceCsv pointerTrace(
+                            "sdmc:/switch/Moonlight-Switch/motion_trace.enable",
+                            "sdmc:/switch/Moonlight-Switch/motion_pointer.csv",
+                            "t_us,controller,sample,dt_s,gyro_x,gyro_y,gyro_z,zoom,cursor_x,cursor_y,accepted",
+                            120000);
+#endif
                         const auto now = std::chrono::steady_clock::now();
                         if (gyroMouseLastSample.time_since_epoch().count() != 0) {
                             const float dt = std::chrono::duration<float>(
@@ -101,9 +109,19 @@ MoonlightInputManager::MoonlightInputManager() {
                                 100.0f;
                             float posX = 0.5f;
                             float posY = 0.5f;
-                            if (gyroAimPointer.update(event.data[0], event.data[1],
-                                                      event.data[2], dt, zoom, posX, posY))
+                            const bool accepted = gyroAimPointer.update(
+                                event.data[0], event.data[1], event.data[2],
+                                dt, zoom, posX, posY);
+                            if (accepted)
                                 gyroMousePosition = brls::Point{posX, posY};
+#ifdef __SWITCH__
+                            if (pointerTrace.enabled())
+                                pointerTrace.write("%llu,%d,%u,%.7f,%.6f,%.6f,%.6f,%.4f,%.7f,%.7f,%d",
+                                    static_cast<unsigned long long>(brls::motionTraceMicros()),
+                                    event.controllerIndex, event.timestamp, dt,
+                                    event.data[0], event.data[1], event.data[2],
+                                    zoom, posX, posY, accepted ? 1 : 0);
+#endif
                         }
                         gyroMouseLastSample = now;
                     }
@@ -111,19 +129,31 @@ MoonlightInputManager::MoonlightInputManager() {
             }
             if (!inputEnabled) return;
             const float gyroScale = Settings::instance().gyro_sensitivity();
-
-            switch (event.type) {
-                case brls::SensorEventType::ACCEL:
-                    LiSendControllerMotionEvent((uint8_t)event.controllerIndex, LI_MOTION_TYPE_ACCEL, event.data[0], event.data[1], event.data[2]);
-                    break;
-                case brls::SensorEventType::GYRO:
-                    // Convert rad/s to deg/s
-                    LiSendControllerMotionEvent((uint8_t)event.controllerIndex, LI_MOTION_TYPE_GYRO, 
-                        event.data[0] * 57.2957795f * gyroScale, 
-                        event.data[1] * 57.2957795f * gyroScale, 
-                        event.data[2] * 57.2957795f * gyroScale);
-                    break;
-            }
+            const bool gyroEvent = event.type == brls::SensorEventType::GYRO;
+            const uint8_t type = gyroEvent ? LI_MOTION_TYPE_GYRO : LI_MOTION_TYPE_ACCEL;
+            const float factor = gyroEvent ? 57.2957795f * gyroScale : 1.0f;
+            const float x = event.data[0] * factor;
+            const float y = event.data[1] * factor;
+            const float z = event.data[2] * factor;
+#ifdef __SWITCH__
+            static brls::MotionTraceCsv networkTrace(
+                "sdmc:/switch/Moonlight-Switch/motion_trace.enable",
+                "sdmc:/switch/Moonlight-Switch/motion_send.csv",
+                "t_us,controller,sample,type,source_x,source_y,source_z,send_x,send_y,send_z,gyro_scale,return_code",
+                240000);
+            const bool tracingNetwork = networkTrace.enabled();
+            const std::uint64_t sentAt = tracingNetwork ? brls::motionTraceMicros() : 0;
+#endif
+            const int result = LiSendControllerMotionEvent(
+                static_cast<uint8_t>(event.controllerIndex), type, x, y, z);
+#ifdef __SWITCH__
+            if (tracingNetwork)
+                networkTrace.write("%llu,%d,%u,%u,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.4f,%d",
+                    static_cast<unsigned long long>(sentAt),
+                    event.controllerIndex, event.timestamp, type,
+                    event.data[0], event.data[1], event.data[2],
+                    x, y, z, gyroScale, result);
+#endif
         });
 }
 
