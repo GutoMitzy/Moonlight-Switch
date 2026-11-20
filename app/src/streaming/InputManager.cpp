@@ -94,15 +94,18 @@ MoonlightInputManager::MoonlightInputManager() {
                     } else if (event.type == brls::SensorEventType::GYRO) {
                         const auto now = std::chrono::steady_clock::now();
                         if (gyroMouseLastSample.time_since_epoch().count() != 0) {
-                            const float dt = std::chrono::duration<float>(
+                            const float wallDt = std::chrono::duration<float>(
                                 now - gyroMouseLastSample).count();
+                            const float dt = event.sampleDeltaSeconds > 0.0f
+                                ? event.sampleDeltaSeconds : wallDt;
                             const float zoom = 0.6f +
                                 1.2f * Settings::instance().get_mouse_speed_multiplier() /
                                 100.0f;
                             float posX = 0.5f;
                             float posY = 0.5f;
                             if (gyroAimPointer.update(event.data[0], event.data[1],
-                                                      event.data[2], dt, zoom, posX, posY))
+                                                      event.data[2], dt, zoom, posX, posY,
+                                                      Settings::instance().gyro_mouse_adaptive_filter()))
                                 gyroMousePosition = brls::Point{posX, posY};
                         }
                         gyroMouseLastSample = now;
@@ -141,6 +144,11 @@ void MoonlightInputManager::setGyroMouseActive(bool active) {
     gyroAimPointer.reset();
     gyroMousePosition.reset();
     desktopMouseRemainder = {0, 0};
+}
+
+void MoonlightInputManager::stabilizeGyroMouseClick() {
+    if (gyroMouseActive)
+        gyroAimPointer.stabilizeClick();
 }
 
 std::optional<brls::Point> MoonlightInputManager::consumeGyroMousePosition() {
