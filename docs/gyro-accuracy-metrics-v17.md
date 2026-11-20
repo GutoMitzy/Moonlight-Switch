@@ -38,3 +38,11 @@ No Fritchii/Lichii, valide os quatro controladores com botões e movimento, depo
 - Jogos: validação de pacote numérico sem transformação adicional; reuso de snapshot HID por ciclo em Borealis.
 - Quatro Joy-Cons: preservada a correção de pares JoyDual adjacentes e testes para quatro e seis metades.
 - **Aprovação ainda pendente:** suíte C++ completa, build Switch 1 e comparação no console e no emulador. Nenhuma porcentagem real de acerto foi medida nesta iteração.
+
+## Evidência sintética reprodutível (não é hardware)
+
+A rotina `tests/gyro_aim_accuracy_synthetic_test.cpp` gera 100 movimentos de um segundo com velocidades conhecidas entre 0,015 e 0,253 rad/s, ruído gaussiano de desvio padrão 0,004 rad/s, intervalo de 5 ms, e compara a posição calculada com o alvo geométrico ideal. Em um teste local de reprodução do algoritmo, a referência anterior obteve 71/100 acertos e o novo algoritmo 97/100 com erro normalizado máximo permitido de 0,01. Esse resultado não deve ser extrapolado para o Switch ou Lichii: trajetórias reais, deriva térmica, pacotes perdidos, movimento do corpo, características de Bluetooth, renderização e latência não são modelados pelo teste.
+
+A camada Borealis passou a estimar o viés automaticamente após 40 amostras consecutivas confirmadas como repouso pelo HID. Uma atualização lenta é aplicada a novas janelas em repouso. A confirmação de repouso também acompanha o `SensorEvent`; o filtro de ponteiro impede acumulação de deriva residual quando esse sinal está ativo e a velocidade angular é inferior a 0,05 rad/s. Movimento significativo permanece habilitado mesmo se o indicador de repouso estiver defasado.
+
+Os testes locais da lógica equivalente de ponteiro e calibração passaram; falta executar os testes do repositório e validar o comportamento no hardware.
