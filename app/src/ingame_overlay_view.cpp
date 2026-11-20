@@ -246,6 +246,27 @@ OptionsTab::OptionsTab(StreamingView* streamView) : streamView(streamView) {
                                    Settings::instance().set_touchscreen_mouse_mode(value);
                                });
     
+#ifdef PLATFORM_SWITCH
+    joyconInputMode->setText("settings/joycon_input_mode"_i18n);
+    joyconInputMode->setData({
+        "settings/joycon_input_separate"_i18n,
+        "settings/joycon_input_paired"_i18n
+    });
+    joyconInputMode->setSelection(Settings::instance().joycon_paired_mode() ? 1 : 0);
+    joyconInputMode->getEvent()->subscribe([](int selected) {
+        Settings::instance().set_joycon_paired_mode(selected == 1);
+        Settings::instance().save();
+    });
+#else
+    joyconInputMode->setVisibility(Visibility::GONE);
+#endif
+
+    pcAudio->init("settings/paop"_i18n, Settings::instance().play_audio(),
+                  [](bool value) {
+                      Settings::instance().set_play_audio(value);
+                      Settings::instance().save();
+                  });
+
     swapStickToDpad->init("settings/swap_stick_to_dpad"_i18n, Settings::instance().swap_joycon_stick_to_dpad(),
                           [](bool value) { Settings::instance().set_swap_joycon_stick_to_dpad(value); });
 
