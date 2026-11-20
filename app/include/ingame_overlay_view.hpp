@@ -63,6 +63,12 @@ class OptionsTab : public brls::Box {
     BRLS_BIND(brls::Header, rumbleForceHeader, "rumble_slider_header");
     BRLS_BIND(brls::Slider, rumbleForceSlider, "rumble_slider");
     BRLS_BIND(brls::BooleanCell, swapStickToDpad, "swap_stick_to_dpad");
+    BRLS_BIND(brls::SelectorCell, joyconInputMode, "joycon_input_mode");
+    BRLS_BIND(brls::SelectorCell, joyconPairGyroMode, "joycon_pair_gyro_mode");
+    BRLS_BIND(brls::BooleanCell, joyconDsu, "joycon_dsu");
+    BRLS_BIND(brls::DetailCell, joyconCalibrate, "joycon_calibrate");
+    BRLS_BIND(brls::DetailCell, joyconDsuStatus, "joycon_dsu_status");
+    BRLS_BIND(brls::DetailCell, joyconMapping, "joycon_mapping");
     BRLS_BIND(brls::Header, mouseHeader, "mouse_speed_header");
     BRLS_BIND(brls::Slider, mouseSlider, "mouse_speed_slider");
     BRLS_BIND(brls::Header, mouseScrollHeader, "mouse_scroll_header");

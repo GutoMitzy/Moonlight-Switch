@@ -16,6 +16,7 @@
 #include "streaming_input_overlay.hpp"
 #include "button_selecting_dialog.hpp"
 #include "UpscalingSupport.hpp"
+#include "halfcon_mapping_view.hpp"
 
 #include <cmath>
 #include <iomanip>
@@ -248,6 +249,88 @@ OptionsTab::OptionsTab(StreamingView* streamView) : streamView(streamView) {
     
     swapStickToDpad->init("settings/swap_stick_to_dpad"_i18n, Settings::instance().swap_joycon_stick_to_dpad(),
                           [](bool value) { Settings::instance().set_swap_joycon_stick_to_dpad(value); });
+
+#ifdef PLATFORM_SWITCH
+    auto* joyconInput = static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager());
+    joyconInputMode->setText("settings/joycon_input_mode"_i18n);
+    joyconInputMode->setData({
+        "settings/joycon_input_separate"_i18n,
+        "settings/joycon_input_paired"_i18n
+    });
+    joyconInputMode->setSelection(Settings::instance().joycon_paired_mode() ? 1 : 0);
+    joyconInputMode->getEvent()->subscribe([](int selected) {
+        Settings::instance().set_joycon_paired_mode(selected == 1);
+        Settings::instance().save();
+    });
+
+    joyconPairGyroMode->setText("settings/joycon_pair_gyro_mode"_i18n);
+    joyconPairGyroMode->setData({
+        "settings/joycon_pair_gyro_right"_i18n,
+        "settings/joycon_pair_gyro_left"_i18n,
+        "settings/joycon_pair_gyro_both"_i18n
+    });
+    joyconPairGyroMode->setSelection(Settings::instance().joycon_pair_gyro_mode());
+    joyconPairGyroMode->getEvent()->subscribe([](int selected) {
+        Settings::instance().set_joycon_pair_gyro_mode(selected);
+        Settings::instance().save();
+    });
+
+    joyconDsu->init("settings/joycon_dsu"_i18n, Settings::instance().joycon_dsu_enabled(),
+        [](bool enabled) {
+            if (!Settings::instance().set_joycon_dsu_enabled(enabled))
+                Application::notify("settings/joycon_dsu_failed"_i18n);
+            Settings::instance().save();
+        });
+
+    joyconCalibrate->setText("settings/joycon_calibrate"_i18n);
+    joyconCalibrate->setDetailText("settings/joycon_calibrate_instructions"_i18n);
+    joyconCalibrate->registerClickAction([this](View*) {
+        auto* input = static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager());
+        const bool ok = input->calibrateJoyConsOnFlatSurface();
+        if (ok)
+            Settings::instance().save();
+        joyconCalibrate->setDetailText(ok ? "settings/joycon_calibrate_success"_i18n
+                                        : "settings/joycon_calibrate_failed"_i18n);
+        Application::notify(ok ? "settings/joycon_calibrate_success"_i18n
+                               : "settings/joycon_calibrate_failed"_i18n);
+        return true;
+    });
+
+    joyconMapping->setText("halfcon/title"_i18n);
+    joyconMapping->registerClickAction([this](View*) {
+        this->present(new HalfConMappingView());
+        return true;
+    });
+
+    joyconDsuStatus->setText("settings/joycon_dsu_status"_i18n);
+    auto updateDsuStatus = [this, joyconInput]() {
+        if (!joyconInput->isDsuMotionEnabled())
+        {
+            joyconDsuStatus->setDetailText("settings/joycon_dsu_off"_i18n);
+            return;
+        }
+        const std::string sensors =
+            std::string(joyconInput->isDsuMotionSensorPresent(brls::HalfJoyConSide::LEFT) ? "L" : "-")
+            + (joyconInput->isDsuMotionSensorPresent(brls::HalfJoyConSide::RIGHT) ? " R" : " -");
+        joyconDsuStatus->setDetailText("Peers: " + std::to_string(joyconInput->getDsuMotionSubscribers())
+            + " | IMU: " + sensors
+            + " | RX: " + std::to_string(joyconInput->getDsuReceivedRequests())
+            + " | TX: " + std::to_string(joyconInput->getDsuSentPackets())
+            + " | ERR: " + std::to_string(joyconInput->getDsuLastError()));
+    };
+    updateDsuStatus();
+    joyconDsuStatus->registerClickAction([updateDsuStatus](View*) {
+        updateDsuStatus();
+        return true;
+    });
+#else
+    joyconInputMode->setVisibility(Visibility::GONE);
+    joyconPairGyroMode->setVisibility(Visibility::GONE);
+    joyconDsu->setVisibility(Visibility::GONE);
+    joyconCalibrate->setVisibility(Visibility::GONE);
+    joyconDsuStatus->setVisibility(Visibility::GONE);
+    joyconMapping->setVisibility(Visibility::GONE);
+#endif
 
     onscreenLogButton->init("streaming/show_logs"_i18n,
                             Settings::instance().write_log(), [](bool value) {

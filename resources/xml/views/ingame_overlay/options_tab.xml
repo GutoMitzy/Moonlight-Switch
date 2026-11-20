@@ -74,6 +74,18 @@
 
             <brls:BooleanCell
                     id="swap_stick_to_dpad"/>
+
+            <brls:SelectorCell id="joycon_input_mode"/>
+
+            <brls:SelectorCell id="joycon_pair_gyro_mode"/>
+
+            <brls:BooleanCell id="joycon_dsu"/>
+
+            <brls:DetailCell id="joycon_dsu_status"/>
+
+            <brls:DetailCell id="joycon_calibrate"/>
+
+            <brls:DetailCell id="joycon_mapping"/>
         
             <brls:Header
                 id="mouse_speed_header"
