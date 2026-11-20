@@ -14,6 +14,8 @@
 #include <chrono>
 #include <optional>
 #include "GyroAimPointer.hpp"
+#include "GyroCalibrationHold.hpp"
+#include <array>
 
 // Moonlight ready gamepad
 struct GamepadState {
@@ -98,6 +100,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     std::chrono::steady_clock::time_point gyroMouseLastSample = {};
     std::optional<brls::Point> gyroMousePosition;
     GyroAimPointer gyroAimPointer;
+    std::array<GyroCalibrationHold, GAMEPADS_MAX> gyroCalibrationHolds;
 
     std::atomic<bool> resetControllers = true;
     int announcedControllerCount = -1;
