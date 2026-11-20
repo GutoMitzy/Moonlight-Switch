@@ -607,8 +607,60 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
         }
     }
 
+    std::array<GamepadState, GAMEPADS_MAX> states{};
+    for (int i = 0; i < controllersCount; ++i)
+        states[i] = getControllerState(i, specialKey);
+
+#ifdef __SWITCH__
+    const bool separateJoyCons = !Settings::instance().joycon_paired_mode();
+    auto* switchInput = static_cast<brls::SwitchInputManager*>(
+        brls::Application::getPlatform()->getInputManager());
+    const auto now = std::chrono::steady_clock::now();
+    if (newStream)
+        for (auto& hold : gyroCalibrationHolds)
+            hold.reset();
+
+    const int groupSize = separateJoyCons ? 2 : 1;
+    for (int first = 0; first < controllersCount; first += groupSize) {
+        const int second = separateJoyCons ? first + 1 : first;
+        const bool fullPair = second < controllersCount;
+        const bool l3 = (states[first].buttonFlags & LS_CLK_FLAG) != 0;
+        const bool r3 = fullPair &&
+            (states[second].buttonFlags & RS_CLK_FLAG) != 0;
+        const bool combination = l3 && r3;
+        const int group = first / groupSize;
+        if (gyroCalibrationHolds[group].update(combination, now)) {
+            const bool calibratedLeft =
+                switchInput->requestSixAxisCalibrationForController(first);
+            const bool calibratedRight = separateJoyCons
+                ? switchInput->requestSixAxisCalibrationForController(second)
+                : calibratedLeft;
+            if (calibratedLeft && calibratedRight) {
+                if (gyroMouseActive &&
+                    (gyroMouseController == first ||
+                     gyroMouseController == second)) {
+                    gyroAimPointer.reset();
+                    gyroMouseLastSample = {};
+                    gyroMousePosition = brls::Point{0.5f, 0.5f};
+                }
+                brls::Logger::info(
+                    "GYRO: L3+R3 calibration requested player={} controllers={}/{}",
+                    group + 1, first, second);
+            } else {
+                brls::Logger::warning(
+                    "GYRO: calibration unavailable for player={}", group + 1);
+            }
+        }
+
+        if (combination) {
+            states[first].buttonFlags &= ~LS_CLK_FLAG;
+            states[second].buttonFlags &= ~RS_CLK_FLAG;
+        }
+    }
+#endif
+
     for (int i = 0; i < controllersCount; i++) {
-        GamepadState gamepadState = getControllerState(i, specialKey);
+        GamepadState& gamepadState = states[i];
 
         if (newStream || controllerSetChanged || !gamepadState.is_equal(lastGamepadStates[i])) {
             lastGamepadStates[i] = gamepadState;
