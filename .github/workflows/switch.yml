@@ -21,10 +21,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Switch 2
-            platform: switch2
-            # Matches the public ounce-devkit Dockerfile's devkitPro toolchain.
-            image: devkitpro/devkita64:20260219
+          - name: Switch 1
+            platform: switch1
+            image: devkitpro/devkita64:latest
 
     container:
       image: ${{ matrix.image }}
