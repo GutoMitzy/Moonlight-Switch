@@ -13,6 +13,7 @@ on:
       - joycon-gyro-pointer-switch1
       - joycon-gyro-pointer-overlay-fix-v2
       - joycon-nav-gyro-pointer-v3
+      - joycon-ui-action-lifetime-fix-v4
 
 permissions:
   contents: read
