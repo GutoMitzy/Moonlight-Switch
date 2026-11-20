@@ -180,6 +180,7 @@ void MoonlightInputManager::setGyroMouseActive(bool active) {
     }
 #endif
     gyroMouseLastSample = {};
+    gyroMouseLastControllerCheck = {};
     gyroAimPointer.reset();
     gyroMousePosition.reset();
     desktopMouseRemainder = {0, 0};
@@ -695,6 +696,27 @@ void MoonlightInputManager::handleInput(bool ignoreTouch) {
 
     //Do not use gamepad for mouse controll assist if touchscreen mode enabled
     bool specialKey = !ignoreTouch && !Settings::instance().touchscreen_mouse_mode() && states.size() == 1;
+
+#ifdef __SWITCH__
+    if (gyroMouseActive) {
+        const auto now = std::chrono::steady_clock::now();
+        if (gyroMouseLastControllerCheck.time_since_epoch().count() == 0 ||
+            now - gyroMouseLastControllerCheck >= std::chrono::seconds(1)) {
+            gyroMouseLastControllerCheck = now;
+            auto* switchInput = static_cast<brls::SwitchInputManager*>(
+                brls::Application::getPlatform()->getInputManager());
+            const int preferred = switchInput->getPreferredRightJoyConController();
+            if (preferred >= 0 && preferred != gyroMouseController) {
+                Logger::info("GYRO: controller reassigned {} -> {} after HID layout change",
+                             gyroMouseController, preferred);
+                gyroMouseController = preferred;
+                gyroMouseLastSample = {};
+                gyroAimPointer.reset();
+                gyroMousePosition = brls::Point{0.5f, 0.5f};
+            }
+        }
+    }
+#endif
 
     handleControllers(specialKey);
 
