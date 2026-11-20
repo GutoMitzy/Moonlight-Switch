@@ -669,7 +669,7 @@ void StreamingView::handleMouseInputCombo() {
     } else if (buttonState && duration.count() >= options.holdTime && !used) {
         used = true;
 
-        auto overlay = new StreamingInputOverlay(this);
+        auto overlay = new StreamingInputOverlay(this, true);
         Application::pushActivity(new Activity(overlay));
     }
 }
