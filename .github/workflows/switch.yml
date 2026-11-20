@@ -120,6 +120,11 @@ jobs:
             -o /tmp/motion_trace_csv_test
           /tmp/motion_trace_csv_test
 
+      - name: Validate gyro accuracy evaluation tool
+        if: matrix.platform == 'switch1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_gyro_target_evaluation.py' -v
+
       - name: Validate motion CSV schemas and offline analysis
         if: matrix.platform == 'switch1'
         run: |
