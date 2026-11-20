@@ -24,6 +24,7 @@ on:
       - joycon-pointer-orientation-anchor-v12
       - joycon-gyro-mouse-stable-mapping-v13
       - joycon-gyro-evidence-v15
+      - joycon-mapping-evidence-v16
 
 permissions:
   contents: read
