@@ -14,7 +14,6 @@ public:
         hasReferenceGravity = false;
         moving = false;
         stationarySeconds = 0.0f;
-        startCandidateSeconds = 0.0f;
         displayOffsetX = 0.0f;
         displayOffsetY = 0.0f;
         displayedX = 0.5f;
@@ -48,7 +47,6 @@ public:
             filteredRate = {};
             moving = false;
             stationarySeconds = 0.0f;
-            startCandidateSeconds = 0.0f;
             return false;
         }
 
@@ -57,25 +55,25 @@ public:
         if (angularSpeed > 20.0f)
             return false;
 
-        constexpr float startThreshold = 0.060f;
-        constexpr float stopThreshold = 0.032f;
-        if (moving) {
-            if (angularSpeed <= stopThreshold) {
-                moving = false;
-                startCandidateSeconds = 0.0f;
-            }
-        } else {
-            startCandidateSeconds = angularSpeed >= startThreshold
-                ? startCandidateSeconds + dt : 0.0f;
-            if (startCandidateSeconds >= 0.020f) {
-                moving = true;
-                startCandidateSeconds = 0.0f;
-            }
-        }
+        // Allow fine aiming on the first sample. Only attenuate very low
+        // angular speeds, where stationary IMU noise dominates.
+        constexpr float noiseFloor = 0.012f;
+        constexpr float fullResponse = 0.036f;
+        const float weight = std::clamp(
+            (angularSpeed - noiseFloor) / (fullResponse - noiseFloor),
+            0.0f, 1.0f);
+        moving = weight > 0.0f;
+        const Vec3 target = angularRate * weight;
 
-        const float alpha = -std::expm1(-dt * 30.0f);
-        const Vec3 target = moving ? angularRate : Vec3{};
-        filteredRate = filteredRate + (target - filteredRate) * alpha;
+        // Fast intentional turns receive the raw sample to avoid adding
+        // filter delay. Micro-adjustments receive a short low-pass filter.
+        constexpr float smoothingCeiling = 0.12f;
+        const float smoothing = std::clamp(
+            (smoothingCeiling - angularSpeed) / smoothingCeiling,
+            0.0f, 1.0f);
+        const float alpha = -std::expm1(-dt * 45.0f);
+        const Vec3 smoothed = filteredRate + (target - filteredRate) * alpha;
+        filteredRate = smoothed * smoothing + target * (1.0f - smoothing);
 
         if (moving) {
             stationarySeconds = 0.0f;
@@ -186,7 +184,6 @@ private:
     bool hasReferenceGravity = false;
     bool moving = false;
     float stationarySeconds = 0.0f;
-    float startCandidateSeconds = 0.0f;
     float displayOffsetX = 0.0f;
     float displayOffsetY = 0.0f;
     float displayedX = 0.5f;
