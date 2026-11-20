@@ -104,6 +104,7 @@
         "title": "Mapping layout editor"
     },
     "mouse_input": {
+        "gyro_pointer": "Gyro pointer (Y): on/off",
         "delete": "Del",
         "hide": "Hide hints",
         "keyboard": "Keyboard",
