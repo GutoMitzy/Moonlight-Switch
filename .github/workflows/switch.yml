@@ -11,6 +11,7 @@ on:
       - joycon-gyro-stability-exit-audio-v3
       - joycon-player-order-menu-v4
       - joycon-gyro-pointer-switch1
+      - joycon-gyro-pointer-overlay-fix-v2
 
 permissions:
   contents: read
