@@ -7,6 +7,7 @@
 
 #include "InputManager.hpp"
 #include "StableVirtualGamepadCount.hpp"
+#include "MotionPacketValidation.hpp"
 #include "Limelight.h"
 #include "Settings.hpp"
 #include <borealis.hpp>
@@ -81,6 +82,9 @@ MoonlightInputManager::MoonlightInputManager() {
     inputManager
         ->getControllerSensorStateChanged()
         ->subscribe([this](brls::SensorEvent event) {
+            if (!validMotionPacket(event.controllerIndex, GAMEPADS_MAX,
+                                   event.data[0], event.data[1], event.data[2]))
+                return;
             if (gyroMouseActive) {
                 if (gyroMouseController < 0 &&
                     event.type == brls::SensorEventType::GYRO &&
