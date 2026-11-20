@@ -19,6 +19,11 @@ public:
         displayOffsetY = 0.0f;
         displayedX = 0.5f;
         displayedY = 0.5f;
+        clickHoldSeconds = 0.0f;
+    }
+
+    void stabilizeClick() {
+        clickHoldSeconds = 0.065f;
     }
 
     void setAcceleration(float x, float y, float z) {
@@ -39,7 +44,8 @@ public:
     }
 
     bool update(float gx, float gy, float gz, float dt, float zoom,
-                float& normalizedX, float& normalizedY) {
+                float& normalizedX, float& normalizedY,
+                bool adaptiveFilter = true) {
         if (!std::isfinite(gx) || !std::isfinite(gy) ||
             !std::isfinite(gz) || !std::isfinite(dt) ||
             !std::isfinite(zoom))
@@ -73,7 +79,11 @@ public:
             }
         }
 
-        const float alpha = -std::expm1(-dt * 30.0f);
+        const float cutoff = std::clamp(4.5f + 15.0f * angularSpeed, 4.5f, 25.0f);
+        const float radians = 6.283185307179586f * cutoff * dt;
+        const float alpha = adaptiveFilter
+            ? radians / (1.0f + radians)
+            : -std::expm1(-dt * 30.0f);
         const Vec3 target = moving ? angularRate : Vec3{};
         filteredRate = filteredRate + (target - filteredRate) * alpha;
 
@@ -108,7 +118,10 @@ public:
         const float focal = baseFocal * std::clamp(zoom, 0.6f, 1.8f);
         const float rawX = 0.5f - aim.x / depth * focal + displayOffsetX;
         const float rawY = 0.5f + aim.y / depth * focal + displayOffsetY;
-        if (!moving) {
+        if (clickHoldSeconds > 0.0f)
+            clickHoldSeconds = std::max(0.0f, clickHoldSeconds - dt);
+
+        if (!moving || clickHoldSeconds > 0.0f) {
             displayOffsetX += displayedX - rawX;
             displayOffsetY += displayedY - rawY;
             normalizedX = displayedX;
@@ -191,4 +204,5 @@ private:
     float displayOffsetY = 0.0f;
     float displayedX = 0.5f;
     float displayedY = 0.5f;
+    float clickHoldSeconds = 0.0f;
 };
