@@ -20,6 +20,7 @@ on:
       - switch-dock-resolution-refresh-v8
       - switch-dock-video-physical-pixels-v9
       - joycon-motion-fidelity-validation-v10
+      - joycon-home-gyro-mouse-stability-v11
 
 permissions:
   contents: read
