@@ -116,7 +116,7 @@ MoonlightInputManager::MoonlightInputManager() {
                             float posY = 0.5f;
                             const bool accepted = gyroAimPointer.update(
                                 event.data[0], event.data[1], event.data[2],
-                                dt, zoom, posX, posY);
+                                dt, zoom, posX, posY, event.atRest);
                             if (accepted)
                                 gyroMousePosition = brls::Point{posX, posY};
 #ifdef __SWITCH__
