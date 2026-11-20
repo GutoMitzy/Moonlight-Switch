@@ -30,6 +30,8 @@ class StreamingInputOverlay : public brls::Box {
     bool isKeyboardOpen = false;
     bool hideHints = false;
     bool gyroMouseEnabled = false;
+    float gyroMouseSubpixelX = 0.0f;
+    float gyroMouseSubpixelY = 0.0f;
 
     void toggleKeyboard();
     void refreshKeyboard();
