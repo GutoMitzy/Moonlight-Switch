@@ -9,7 +9,7 @@ class TraceSchemaTests(unittest.TestCase):
     def test_hid_schema(self):
         path = ROOT / "extern/borealis/library/lib/platforms/switch/switch_input.cpp"
         source = path.read_text(encoding="utf-8")
-        header = re.search(r'"motion_hid\.csv",\s*"([^"]+)"', source)
+        header = re.search(r'"[^"]*motion_hid\.csv",\s*"([^"]+)"', source)
         self.assertIsNotNone(header)
         self.assertEqual(len(header.group(1).split(",")), 36)
         fmt = re.search(r'motionTrace\.write\("([^"]+)"', source)
@@ -20,7 +20,7 @@ class TraceSchemaTests(unittest.TestCase):
 
     def test_network_schema_and_unchanged_values(self):
         source = (ROOT / "app/src/streaming/InputManager.cpp").read_text(encoding="utf-8")
-        header = re.search(r'"motion_send\.csv",\s*"([^"]+)"', source)
+        header = re.search(r'"[^"]*motion_send\.csv",\s*"([^"]+)"', source)
         self.assertIsNotNone(header)
         self.assertEqual(len(header.group(1).split(",")), 12)
         fmt = re.search(r'networkTrace\.write\("([^"]+)"', source)
@@ -30,7 +30,7 @@ class TraceSchemaTests(unittest.TestCase):
 
     def test_pointer_schema_and_timestamp(self):
         source = (ROOT / "app/src/streaming/InputManager.cpp").read_text(encoding="utf-8")
-        header = re.search(r'"motion_pointer\.csv",\s*"([^"]+)"', source)
+        header = re.search(r'"[^"]*motion_pointer\.csv",\s*"([^"]+)"', source)
         self.assertIsNotNone(header)
         self.assertEqual(len(header.group(1).split(",")), 11)
         fmt = re.search(r'pointerTrace\.write\("([^"]+)"', source)
