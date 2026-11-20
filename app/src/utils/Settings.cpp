@@ -441,6 +441,8 @@ void Settings::load() {
 #ifdef __SWITCH__
             if (json_t* joycon_paired_mode = json_object_get(settings, "joycon_paired_mode"))
                 m_joycon_paired_mode = json_typeof(joycon_paired_mode) == JSON_TRUE;
+            if (json_t* joycon_dsu_enabled = json_object_get(settings, "joycon_dsu_enabled"))
+                m_joycon_dsu_enabled = json_is_true(joycon_dsu_enabled);
             if (json_t* joycon_pair_gyro_mode = json_object_get(settings, "joycon_pair_gyro_mode")) {
                 const auto mode = json_integer_value(joycon_pair_gyro_mode);
                 if (mode >= 0 && mode <= 2)
@@ -624,6 +626,7 @@ void Settings::load() {
     set_halfcon_mapping(brls::HalfJoyConSide::RIGHT, m_halfcon_mappings[1]);
     set_joycon_paired_mode(m_joycon_paired_mode);
     set_joycon_pair_gyro_mode(m_joycon_pair_gyro_mode);
+    set_joycon_dsu_enabled(m_joycon_dsu_enabled);
 #endif
 }
 
@@ -642,6 +645,18 @@ void Settings::set_halfcon_mapping(brls::HalfJoyConSide side, const brls::HalfJo
         target[i] = brls::validHalfJoyConAction(mapping[i]) ? mapping[i] : brls::HALF_JOYCON_UNMAPPED;
     static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager())
         ->setHalfJoyConMapping(side, target);
+}
+
+bool Settings::set_joycon_dsu_enabled(bool enabled)
+{
+    auto* input = static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager());
+    if (!input->setDsuMotionEnabled(enabled))
+    {
+        m_joycon_dsu_enabled = false;
+        return false;
+    }
+    m_joycon_dsu_enabled = enabled;
+    return true;
 }
 
 void Settings::set_joycon_pair_gyro_mode(int mode)
@@ -756,6 +771,7 @@ void Settings::save()
 #ifdef __SWITCH__
             json_object_set_new(settings, "joycon_paired_mode", m_joycon_paired_mode ? json_true() : json_false());
             json_object_set_new(settings, "joycon_pair_gyro_mode", json_integer(m_joycon_pair_gyro_mode));
+            json_object_set_new(settings, "joycon_dsu_enabled", m_joycon_dsu_enabled ? json_true() : json_false());
 #endif
             json_object_set_new(settings, "touchscreen_mouse_mode", m_touchscreen_mouse_mode ? json_true() : json_false());
             json_object_set_new(settings, "swap_mouse_keys", m_swap_mouse_keys ? json_true() : json_false());
