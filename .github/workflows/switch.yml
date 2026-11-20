@@ -94,6 +94,14 @@ jobs:
             -o /tmp/gyro_aim_pointer_test
           /tmp/gyro_aim_pointer_test
 
+      - name: Validate gyro calibration hold shortcut
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/gyro_calibration_hold_test.cpp \
+            -o /tmp/gyro_calibration_hold_test
+          /tmp/gyro_calibration_hold_test
+
       - name: Validate motion event input guards for multiple controllers
         if: matrix.platform == 'switch1'
         run: |
