@@ -73,6 +73,14 @@ jobs:
             -o /tmp/sixaxis_quality_test
           /tmp/sixaxis_quality_test
 
+      - name: Validate gyro pointer stability
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/gyro_pointer_filter_test.cpp \
+            -o /tmp/gyro_pointer_filter_test
+          /tmp/gyro_pointer_filter_test
+
       - name: Run cmake
         if: matrix.platform == 'switch1'
         continue-on-error: true
