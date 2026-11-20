@@ -9,6 +9,7 @@ on:
       - joycon-motion-units-drift-fix
       - joycon-motion-stability-overlay-v2
       - joycon-gyro-stability-exit-audio-v3
+      - joycon-player-order-menu-v4
 
 permissions:
   contents: read
