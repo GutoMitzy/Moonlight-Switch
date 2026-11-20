@@ -84,7 +84,7 @@ MoonlightInputManager::MoonlightInputManager() {
                 const float pitch = -event.data[0];
                 if (std::isfinite(yaw) && std::isfinite(pitch)) {
                     const float movement = std::max(std::fabs(yaw), std::fabs(pitch));
-                    if (gyroMouseController < 0 && movement > 0.22f) {
+                    if (gyroMouseController < 0 && movement > 0.07f) {
                         gyroMouseController = event.controllerIndex;
                         gyroMouseLastSample = {};
                     }
@@ -92,16 +92,24 @@ MoonlightInputManager::MoonlightInputManager() {
                         const auto now = std::chrono::steady_clock::now();
                         if (gyroMouseLastSample.time_since_epoch().count() != 0) {
                             const float dt = std::chrono::duration<float>(now - gyroMouseLastSample).count();
-                            if (dt > 0.0f && dt < 0.06f) {
-                                const float filter = 1.0f - std::exp(-dt * 16.0f);
+                            if (dt > 0.0f && dt < 0.08f) {
+                                const float filter = -std::expm1(-dt * 22.0f);
                                 gyroMouseFilteredX += (yaw - gyroMouseFilteredX) * filter;
                                 gyroMouseFilteredY += (pitch - gyroMouseFilteredY) * filter;
-                                const float horizontal = std::fabs(gyroMouseFilteredX) < 0.025f ? 0.0f : gyroMouseFilteredX;
-                                const float vertical = std::fabs(gyroMouseFilteredY) < 0.025f ? 0.0f : gyroMouseFilteredY;
+                                const float deadzone = 0.018f;
+                                const auto compensate = [deadzone](float rate) {
+                                    if (std::fabs(rate) <= deadzone) return 0.0f;
+                                    return rate - std::copysign(deadzone, rate);
+                                };
                                 const float speed = 650.0f *
                                     (0.5f + Settings::instance().get_mouse_speed_multiplier() / 100.0f * 1.5f);
-                                gyroMousePending.x = std::clamp(gyroMousePending.x + horizontal * dt * speed, -100.0f, 100.0f);
-                                gyroMousePending.y = std::clamp(gyroMousePending.y + vertical * dt * speed, -100.0f, 100.0f);
+                                gyroMousePending.x = std::clamp(gyroMousePending.x +
+                                    compensate(gyroMouseFilteredX) * dt * speed, -2048.0f, 2048.0f);
+                                gyroMousePending.y = std::clamp(gyroMousePending.y +
+                                    compensate(gyroMouseFilteredY) * dt * speed, -2048.0f, 2048.0f);
+                            } else if (dt >= 0.08f) {
+                                gyroMouseFilteredX = 0.0f;
+                                gyroMouseFilteredY = 0.0f;
                             }
                         }
                         gyroMouseLastSample = now;
