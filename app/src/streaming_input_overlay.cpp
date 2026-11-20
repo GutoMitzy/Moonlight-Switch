@@ -97,7 +97,7 @@ void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
         if (y < 2 && y > -2)
             y = 0;
 
-        if (x != 0 || y != 0) {
+        if (!gyroMouseEnabled && (x != 0 || y != 0)) {
             float multiplier =
                 Settings::instance().get_mouse_speed_multiplier() / 100.f *
                     1.5f +
