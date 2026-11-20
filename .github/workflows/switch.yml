@@ -23,6 +23,7 @@ on:
       - joycon-home-gyro-mouse-stability-v11
       - joycon-pointer-orientation-anchor-v12
       - joycon-gyro-mouse-stable-mapping-v13
+      - joycon-motion-samples-one-euro-v14
 
 permissions:
   contents: read
@@ -100,6 +101,23 @@ jobs:
             extern/borealis/tests/stable_joycon_slots_test.cpp \
             -o /tmp/stable_joycon_slots_test
           /tmp/stable_joycon_slots_test
+
+      - name: Validate chronological IMU sampling and timing
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/sixaxis_batch_test.cpp \
+            -o /tmp/sixaxis_batch_test
+          /tmp/sixaxis_batch_test
+
+      - name: Validate v14 gyro aim noise, response, and click stability
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/gyro_aim_v14_test.cpp \
+            -o /tmp/gyro_aim_v14_test
+          /tmp/gyro_aim_v14_test
 
       - name: Run cmake
         if: matrix.platform == 'switch1'
