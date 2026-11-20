@@ -78,6 +78,17 @@
             <brls:BooleanCell
                     id="swap_stick_to_dpad"/>
 
+            <brls:Header
+                id="gyro_sensitivity_header"
+                title="@i18n/settings/gyro_sensitivity"
+                subtitle=""
+                paddingTop="40"/>
+
+            <brls:Slider
+                id="gyro_sensitivity_slider"
+                width="auto"
+                height="84"/>
+
             <brls:BooleanCell
                     id="pc_audio"/>
         
