@@ -137,6 +137,13 @@ MoonlightInputManager::MoonlightInputManager() {
 void MoonlightInputManager::setGyroMouseActive(bool active) {
     gyroMouseActive = active;
     gyroMouseController = -1;
+#ifdef __SWITCH__
+    if (active) {
+        auto* platformInput = static_cast<brls::SwitchInputManager*>(
+            brls::Application::getPlatform()->getInputManager());
+        gyroMouseController = platformInput->getPreferredRightJoyConController();
+    }
+#endif
     gyroMouseLastSample = {};
     gyroMouseFilteredX = 0.0f;
     gyroMouseFilteredY = 0.0f;
