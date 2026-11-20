@@ -104,6 +104,7 @@
         "title": "Mapear editor de layout"
     },
     "mouse_input": {
+        "gyro_pointer": "Ponteiro por giroscópio (Y): ligar/desligar",
         "delete": "Del",
         "hide": "Hide hints",
         "keyboard": "Teclado",
