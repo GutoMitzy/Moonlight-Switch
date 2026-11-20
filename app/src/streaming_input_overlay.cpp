@@ -8,6 +8,7 @@
 #include "streaming_input_overlay.hpp"
 #include "InputManager.hpp"
 #include <Limelight.h>
+#include <cmath>
 
 using namespace brls;
 
@@ -99,8 +100,15 @@ void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
 
         if (gyroMouseEnabled) {
             const auto delta = MoonlightInputManager::instance().consumeGyroMouseDelta();
-            if (delta.x != 0 || delta.y != 0)
-                LiSendMouseMoveEvent(delta.x, delta.y);
+            gyroMouseSubpixelX += delta.x;
+            gyroMouseSubpixelY += delta.y;
+            const int dx = static_cast<int>(std::trunc(gyroMouseSubpixelX));
+            const int dy = static_cast<int>(std::trunc(gyroMouseSubpixelY));
+            if (dx != 0 || dy != 0) {
+                gyroMouseSubpixelX -= dx;
+                gyroMouseSubpixelY -= dy;
+                LiSendMouseMoveEvent(dx, dy);
+            }
         }
 
         if (!gyroMouseEnabled && (x != 0 || y != 0)) {
@@ -216,7 +224,17 @@ void StreamingInputOverlay::populateHintWithDefaultItems() {
                                            ControllerButton::BUTTON_Y,
                                            [this](View*) {
                                                gyroMouseEnabled = !gyroMouseEnabled;
+                                               gyroMouseSubpixelX = 0.0f;
+                                               gyroMouseSubpixelY = 0.0f;
                                                MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled);
+                                               if (gyroMouseEnabled && Application::contentWidth > 0
+                                                   && Application::contentHeight > 0) {
+                                                   LiSendMousePositionEvent(
+                                                       Application::contentWidth / 2,
+                                                       Application::contentHeight / 2,
+                                                       Application::contentWidth,
+                                                       Application::contentHeight);
+                                               }
                                                return true;
                                            }));
 
