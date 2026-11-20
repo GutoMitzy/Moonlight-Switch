@@ -44,6 +44,9 @@
                 width="auto"
                 height="84"/>
 
+            <brls:DetailCell
+                id="gyro_manual_calibration"/>
+
             <brls:BooleanCell
                     id="pc_audio"/>
         
