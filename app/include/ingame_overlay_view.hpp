@@ -65,6 +65,8 @@ class OptionsTab : public brls::Box {
     BRLS_BIND(brls::BooleanCell, swapStickToDpad, "swap_stick_to_dpad");
     BRLS_BIND(brls::SelectorCell, joyconInputMode, "joycon_input_mode");
     BRLS_BIND(brls::BooleanCell, pcAudio, "pc_audio");
+    BRLS_BIND(brls::Header, gyroSensitivityHeader, "gyro_sensitivity_header");
+    BRLS_BIND(brls::Slider, gyroSensitivitySlider, "gyro_sensitivity_slider");
     BRLS_BIND(brls::Header, mouseHeader, "mouse_speed_header");
     BRLS_BIND(brls::Slider, mouseSlider, "mouse_speed_slider");
     BRLS_BIND(brls::Header, mouseScrollHeader, "mouse_scroll_header");
