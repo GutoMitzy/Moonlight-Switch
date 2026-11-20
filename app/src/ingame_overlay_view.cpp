@@ -273,6 +273,13 @@ OptionsTab::OptionsTab(StreamingView* streamView) : streamView(streamView) {
         Settings::instance().save();
     });
     gyroSensitivitySlider->setProgress((initialGyroSensitivity - 0.25f) / 1.25f);
+    gyroMouseAdaptiveFilter->init(
+        "settings/gyro_mouse_adaptive_filter"_i18n,
+        Settings::instance().gyro_mouse_adaptive_filter(),
+        [](bool enabled) {
+            Settings::instance().set_gyro_mouse_adaptive_filter(enabled);
+            Settings::instance().save();
+        });
 #ifdef PLATFORM_SWITCH
     gyroManualCalibration->setText("settings/gyro_manual_calibration"_i18n);
     gyroManualCalibration->registerClickAction([](View*) {
