@@ -46,6 +46,8 @@
 
             <brls:DetailCell
                 id="gyro_manual_calibration"/>
+            <brls:BooleanCell
+                id="gyro_mouse_adaptive_filter"/>
 
             <brls:BooleanCell
                     id="pc_audio"/>
