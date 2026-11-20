@@ -12,8 +12,8 @@
 
 using namespace brls;
 
-StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView)
-    : streamView(streamView) {
+StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView, bool enableGyroOnOpen)
+    : streamView(streamView), gyroMouseEnabled(enableGyroOnOpen) {
     this->inflateFromXMLRes("xml/views/stream_input_overlay.xml");
 
     inner->setHideHighlightBackground(true);
@@ -34,6 +34,13 @@ StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView)
         [this](TapGestureStatus status, Sound* sound) {}));
 
     populateHintWithDefaultItems();
+    if (gyroMouseEnabled) {
+        MoonlightInputManager::instance().setGyroMouseActive(true);
+        if (Application::contentWidth > 0 && Application::contentHeight > 0)
+            LiSendMousePositionEvent(
+                Application::contentWidth / 2, Application::contentHeight / 2,
+                Application::contentWidth, Application::contentHeight);
+    }
 
     inner->registerAction("hints/back"_i18n, ControllerButton::BUTTON_B,
                           [this](View* view) {
@@ -58,6 +65,30 @@ void StreamingInputOverlay::onFocusGained() {
 void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
                                  float height, Style style, FrameContext* ctx) {
     Box::draw(vg, x, y, width, height, style, ctx);
+
+    const auto options = Settings::instance().mouse_input_options();
+    if (!options.buttons.empty()) {
+        ControllerState shortcutState = {};
+        Application::getPlatform()->getInputManager()
+            ->updateUnifiedControllerState(&shortcutState);
+        bool down = true;
+        for (const auto button : options.buttons)
+            down &= shortcutState.buttons[button];
+        if (!down) {
+            shortcutReleased = true;
+            shortcutPressed = false;
+        } else if (shortcutReleased) {
+            const auto now = std::chrono::steady_clock::now();
+            if (!shortcutPressed) {
+                shortcutPressed = true;
+                shortcutPressedAt = now;
+            } else if (now - shortcutPressedAt >=
+                       std::chrono::seconds(options.holdTime)) {
+                dismiss();
+                return;
+            }
+        }
+    }
 
     // Keyboard
     if (keyboard) {
