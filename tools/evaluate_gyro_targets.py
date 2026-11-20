@@ -37,7 +37,7 @@ def evaluate(path, tolerance):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("csv", type=Path)
-    parser.add_argument("--tolerance", type=float, default=0.03)
+    parser.add_argument("--tolerance", type=float, default=0.01)
     args = parser.parse_args()
     if not (0 < args.tolerance < 1):
         parser.error("--tolerance must be between 0 and 1")
