@@ -506,17 +506,23 @@ void StreamingView::terminate(bool terminateApp) {
         return;
     terminated = true;
 
-    session->stop(terminateApp);
+    MoonlightInputManager::instance().setInputEnabled(false);
+    MoonlightInputManager::instance().dropInput();
 
-    int controllersCount = Application::getPlatform()->getInputManager()->getControllersConnectedCount();
+    const int controllersCount = Application::getPlatform()->getInputManager()->getControllersConnectedCount();
     for (int i = 0; i < controllersCount; i++)
         Application::getPlatform()->getInputManager()->sendRumble(i, 0, 0);
 
-    bool hasOverlays =
-        Application::getActivitiesStack().back() != this->getParentActivity();
-    this->dismiss([this, hasOverlays] {
-        if (hasOverlays)
-            this->dismiss();
+    brls::async([this, terminateApp] {
+        session->stop(terminateApp);
+        brls::sync([this] {
+            const auto& activities = Application::getActivitiesStack();
+            const bool hasOverlays = !activities.empty() && activities.back() != this->getParentActivity();
+            this->dismiss([this, hasOverlays] {
+                if (hasOverlays)
+                    this->dismiss();
+            });
+        });
     });
 }
 
