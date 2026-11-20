@@ -94,7 +94,8 @@ MoonlightInputManager::MoonlightInputManager() {
                         if (dt > 0.0f && dt < 0.1f && movement > 0.035f) {
                             const float speed = 350.0f *
                                 (0.5f + Settings::instance().get_mouse_speed_multiplier() / 100.0f * 1.5f);
-                            sendRelativeMouseMove({yaw * dt * speed, pitch * dt * speed});
+                            gyroMousePending.x += yaw * dt * speed;
+                            gyroMousePending.y += pitch * dt * speed;
                         }
                     }
                     gyroMouseLastSample = now;
@@ -122,7 +123,14 @@ void MoonlightInputManager::setGyroMouseActive(bool active) {
     gyroMouseActive = active;
     gyroMouseController = -1;
     gyroMouseLastSample = {};
+    gyroMousePending = {0, 0};
     desktopMouseRemainder = {0, 0};
+}
+
+brls::Point MoonlightInputManager::consumeGyroMouseDelta() {
+    brls::Point delta = gyroMousePending;
+    gyroMousePending = {0, 0};
+    return delta;
 }
 
 void MoonlightInputManager::handleDesktopMouseScroll(brls::Point scroll) {
