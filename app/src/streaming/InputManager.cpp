@@ -80,7 +80,8 @@ MoonlightInputManager::MoonlightInputManager() {
         ->getControllerSensorStateChanged()
         ->subscribe([this](brls::SensorEvent event) {
             if (!inputEnabled) return;
-            
+            const float gyroScale = Settings::instance().gyro_sensitivity();
+
             switch (event.type) {
                 case brls::SensorEventType::ACCEL:
                     LiSendControllerMotionEvent((uint8_t)event.controllerIndex, LI_MOTION_TYPE_ACCEL, event.data[0], event.data[1], event.data[2]);
@@ -88,9 +89,9 @@ MoonlightInputManager::MoonlightInputManager() {
                 case brls::SensorEventType::GYRO:
                     // Convert rad/s to deg/s
                     LiSendControllerMotionEvent((uint8_t)event.controllerIndex, LI_MOTION_TYPE_GYRO, 
-                        event.data[0] * 57.2957795f, 
-                        event.data[1] * 57.2957795f, 
-                        event.data[2] * 57.2957795f);
+                        event.data[0] * 57.2957795f * gyroScale, 
+                        event.data[1] * 57.2957795f * gyroScale, 
+                        event.data[2] * 57.2957795f * gyroScale);
                     break;
             }
         });
