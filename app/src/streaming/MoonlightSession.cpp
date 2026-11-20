@@ -413,8 +413,6 @@ void MoonlightSession::stop(int terminate_app) {
         GameStreamClient::instance().quit(m_address, [](auto _) {});
     }
 
-    if (!m_suspended && m_video_renderer)
-        m_video_renderer->invalidateHardwareResources();
     LiStopConnection();
 }
 
