@@ -63,6 +63,15 @@ jobs:
         if: matrix.platform == 'switch1'
         run: dkp-pacman --noconfirm -R switch-enet
 
+      - name: Validate sixaxis motion quality rules
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/sixaxis_quality_test.cpp \
+            -o /tmp/sixaxis_quality_test
+          /tmp/sixaxis_quality_test
+
       - name: Run cmake
         if: matrix.platform == 'switch1'
         continue-on-error: true
