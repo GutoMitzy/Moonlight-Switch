@@ -80,7 +80,7 @@ MoonlightInputManager::MoonlightInputManager() {
         ->getControllerSensorStateChanged()
         ->subscribe([this](brls::SensorEvent event) {
             if (gyroMouseActive && event.type == brls::SensorEventType::GYRO) {
-                const float yaw = -event.data[2];
+                const float yaw = -event.data[1];
                 const float pitch = -event.data[0];
                 if (std::isfinite(yaw) && std::isfinite(pitch)) {
                     const float movement = std::max(std::fabs(yaw), std::fabs(pitch));
@@ -92,11 +92,16 @@ MoonlightInputManager::MoonlightInputManager() {
                         const auto now = std::chrono::steady_clock::now();
                         if (gyroMouseLastSample.time_since_epoch().count() != 0) {
                             const float dt = std::chrono::duration<float>(now - gyroMouseLastSample).count();
-                            if (dt > 0.0f && dt < 0.06f && movement > 0.035f) {
-                                const float speed = 350.0f *
+                            if (dt > 0.0f && dt < 0.06f) {
+                                const float filter = 1.0f - std::exp(-dt * 16.0f);
+                                gyroMouseFilteredX += (yaw - gyroMouseFilteredX) * filter;
+                                gyroMouseFilteredY += (pitch - gyroMouseFilteredY) * filter;
+                                const float horizontal = std::fabs(gyroMouseFilteredX) < 0.025f ? 0.0f : gyroMouseFilteredX;
+                                const float vertical = std::fabs(gyroMouseFilteredY) < 0.025f ? 0.0f : gyroMouseFilteredY;
+                                const float speed = 650.0f *
                                     (0.5f + Settings::instance().get_mouse_speed_multiplier() / 100.0f * 1.5f);
-                                gyroMousePending.x = std::clamp(gyroMousePending.x + yaw * dt * speed, -100.0f, 100.0f);
-                                gyroMousePending.y = std::clamp(gyroMousePending.y + pitch * dt * speed, -100.0f, 100.0f);
+                                gyroMousePending.x = std::clamp(gyroMousePending.x + horizontal * dt * speed, -100.0f, 100.0f);
+                                gyroMousePending.y = std::clamp(gyroMousePending.y + vertical * dt * speed, -100.0f, 100.0f);
                             }
                         }
                         gyroMouseLastSample = now;
@@ -125,6 +130,8 @@ void MoonlightInputManager::setGyroMouseActive(bool active) {
     gyroMouseActive = active;
     gyroMouseController = -1;
     gyroMouseLastSample = {};
+    gyroMouseFilteredX = 0.0f;
+    gyroMouseFilteredY = 0.0f;
     gyroMousePending = {0, 0};
     desktopMouseRemainder = {0, 0};
 }
