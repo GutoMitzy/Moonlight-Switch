@@ -131,10 +131,12 @@ MoonlightInputManager::MoonlightInputManager() {
             const float gyroScale = Settings::instance().gyro_sensitivity();
             const bool gyroEvent = event.type == brls::SensorEventType::GYRO;
             const uint8_t type = gyroEvent ? LI_MOTION_TYPE_GYRO : LI_MOTION_TYPE_ACCEL;
-            const float factor = gyroEvent ? 57.2957795f * gyroScale : 1.0f;
-            const float x = event.data[0] * factor;
-            const float y = event.data[1] * factor;
-            const float z = event.data[2] * factor;
+            const float x = gyroEvent
+                ? event.data[0] * 57.2957795f * gyroScale : event.data[0];
+            const float y = gyroEvent
+                ? event.data[1] * 57.2957795f * gyroScale : event.data[1];
+            const float z = gyroEvent
+                ? event.data[2] * 57.2957795f * gyroScale : event.data[2];
 #ifdef __SWITCH__
             static brls::MotionTraceCsv networkTrace(
                 "sdmc:/switch/Moonlight-Switch/motion_trace.enable",
