@@ -82,23 +82,25 @@ MoonlightInputManager::MoonlightInputManager() {
             if (gyroMouseActive && event.type == brls::SensorEventType::GYRO) {
                 const float yaw = -event.data[2];
                 const float pitch = -event.data[0];
-                const float movement = std::hypot(yaw, pitch);
-                if (gyroMouseController < 0 && movement > 0.22f) {
-                    gyroMouseController = event.controllerIndex;
-                    gyroMouseLastSample = {};
-                }
-                if (gyroMouseController == event.controllerIndex) {
-                    const auto now = std::chrono::steady_clock::now();
-                    if (gyroMouseLastSample.time_since_epoch().count() != 0) {
-                        const float dt = std::chrono::duration<float>(now - gyroMouseLastSample).count();
-                        if (dt > 0.0f && dt < 0.1f && movement > 0.035f) {
-                            const float speed = 350.0f *
-                                (0.5f + Settings::instance().get_mouse_speed_multiplier() / 100.0f * 1.5f);
-                            gyroMousePending.x += yaw * dt * speed;
-                            gyroMousePending.y += pitch * dt * speed;
-                        }
+                if (std::isfinite(yaw) && std::isfinite(pitch)) {
+                    const float movement = std::max(std::fabs(yaw), std::fabs(pitch));
+                    if (gyroMouseController < 0 && movement > 0.22f) {
+                        gyroMouseController = event.controllerIndex;
+                        gyroMouseLastSample = {};
                     }
-                    gyroMouseLastSample = now;
+                    if (gyroMouseController == event.controllerIndex) {
+                        const auto now = std::chrono::steady_clock::now();
+                        if (gyroMouseLastSample.time_since_epoch().count() != 0) {
+                            const float dt = std::chrono::duration<float>(now - gyroMouseLastSample).count();
+                            if (dt > 0.0f && dt < 0.06f && movement > 0.035f) {
+                                const float speed = 350.0f *
+                                    (0.5f + Settings::instance().get_mouse_speed_multiplier() / 100.0f * 1.5f);
+                                gyroMousePending.x = std::clamp(gyroMousePending.x + yaw * dt * speed, -100.0f, 100.0f);
+                                gyroMousePending.y = std::clamp(gyroMousePending.y + pitch * dt * speed, -100.0f, 100.0f);
+                            }
+                        }
+                        gyroMouseLastSample = now;
+                    }
                 }
             }
             if (!inputEnabled) return;
