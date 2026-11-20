@@ -7,6 +7,7 @@ on:
     branches:
       - joycon-gyro-sensor-isolation-v3
       - joycon-motion-units-drift-fix
+      - joycon-motion-stability-overlay-v2
 
 permissions:
   contents: read
@@ -20,9 +21,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Switch 1
-            platform: switch1
-            image: devkitpro/devkita64:latest
           - name: Switch 2
             platform: switch2
             # Matches the public ounce-devkit Dockerfile's devkitPro toolchain.
