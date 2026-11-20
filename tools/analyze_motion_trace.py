@@ -97,7 +97,7 @@ def summarize(folder):
             summary["send"]["/".join(key)] = {
                 "rows": g["rows"],
                 "negative_return_codes": g["errors"],
-                "delivery_interval_ms_p50": percentile([x / 1000 for x in g["interval_us"]], 0.5),
+                "enqueue_interval_ms_p50": percentile([x / 1000 for x in g["interval_us"]], 0.5),
                 "delivery_interval_ms_p95": percentile([x / 1000 for x in g["interval_us"]], 0.95),
                 "local_hid_to_enqueue_ms_p50": percentile([x / 1000 for x in g["local_delay_us"]], 0.5),
                 "local_hid_to_enqueue_ms_p95": percentile([x / 1000 for x in g["local_delay_us"]], 0.95)
