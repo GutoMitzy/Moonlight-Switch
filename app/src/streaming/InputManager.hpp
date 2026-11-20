@@ -63,6 +63,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     void reloadButtonMappingLayout();
     void setInputEnabled(bool enabled) { inputEnabled = enabled; }
     void setGyroMouseActive(bool active);
+    void stabilizeGyroMouseClick();
     std::optional<brls::Point> consumeGyroMousePosition();
     static void leftMouseClick();
     static void rightMouseClick();
