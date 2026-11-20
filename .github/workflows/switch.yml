@@ -17,6 +17,7 @@ on:
       - joycon-pointer-aim-vertical-menus-v5
       - joycon-pointer-smooth-center-v6
       - joycon-pointer-stable-right-v7
+      - switch-dock-resolution-refresh-v8
 
 permissions:
   contents: read
