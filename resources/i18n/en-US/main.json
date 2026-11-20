@@ -113,6 +113,7 @@
         "title": "Mouse input mode"
     },
     "settings": {
+        "gyro_sensitivity": "Gyroscope sensitivity",
         "joycon_input_mode": "Joy-Con input mode",
         "joycon_input_separate": "Separate (two controllers)",
         "joycon_input_paired": "Paired (one full controller)",
