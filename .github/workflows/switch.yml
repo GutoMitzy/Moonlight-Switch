@@ -19,6 +19,7 @@ on:
       - joycon-pointer-stable-right-v7
       - switch-dock-resolution-refresh-v8
       - switch-dock-video-physical-pixels-v9
+      - joycon-motion-fidelity-validation-v10
 
 permissions:
   contents: read
