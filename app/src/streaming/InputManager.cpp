@@ -176,7 +176,7 @@ void MoonlightInputManager::setGyroMouseActive(bool active) {
     if (active) {
         auto* platformInput = static_cast<brls::SwitchInputManager*>(
             brls::Application::getPlatform()->getInputManager());
-        gyroMouseController = platformInput->getPreferredRightJoyConController();
+        gyroMouseController = platformInput->getPreferredGyroMouseController();
     }
 #endif
     gyroMouseLastSample = {};
@@ -705,7 +705,7 @@ void MoonlightInputManager::handleInput(bool ignoreTouch) {
             gyroMouseLastControllerCheck = now;
             auto* switchInput = static_cast<brls::SwitchInputManager*>(
                 brls::Application::getPlatform()->getInputManager());
-            const int preferred = switchInput->getPreferredRightJoyConController();
+            const int preferred = switchInput->getPreferredGyroMouseController();
             if (preferred >= 0 && preferred != gyroMouseController) {
                 Logger::info("GYRO: controller reassigned {} -> {} after HID layout change",
                              gyroMouseController, preferred);
