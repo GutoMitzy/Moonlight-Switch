@@ -97,6 +97,12 @@ void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
         if (y < 2 && y > -2)
             y = 0;
 
+        if (gyroMouseEnabled) {
+            const auto delta = MoonlightInputManager::instance().consumeGyroMouseDelta();
+            if (delta.x != 0 || delta.y != 0)
+                LiSendMouseMoveEvent(delta.x, delta.y);
+        }
+
         if (!gyroMouseEnabled && (x != 0 || y != 0)) {
             float multiplier =
                 Settings::instance().get_mouse_speed_multiplier() / 100.f *
