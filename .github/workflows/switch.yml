@@ -102,6 +102,14 @@ jobs:
             -o /tmp/motion_packet_validation_test
           /tmp/motion_packet_validation_test
 
+      - name: Validate synthetic gyro target tracking
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/gyro_aim_accuracy_synthetic_test.cpp \
+            -o /tmp/gyro_aim_accuracy_synthetic_test
+          /tmp/gyro_aim_accuracy_synthetic_test
+
       - name: Validate stable Joy-Con pairing and controller enumeration
         if: matrix.platform == 'switch1'
         run: |
