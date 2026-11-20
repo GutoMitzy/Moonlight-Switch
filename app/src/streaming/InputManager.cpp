@@ -6,6 +6,7 @@
 #endif
 
 #include "InputManager.hpp"
+#include "StableVirtualGamepadCount.hpp"
 #include "Limelight.h"
 #include "Settings.hpp"
 #include <borealis.hpp>
@@ -401,9 +402,9 @@ void MoonlightInputManager::dropInput() {
     }
 
 #ifdef __SWITCH__
-    if (!Settings::instance().joycon_paired_mode() &&
-        announcedControllerCount > controllersCount)
-        controllersCount = announcedControllerCount;
+    controllersCount = static_cast<short>(stableVirtualGamepadCount(
+        controllersCount, announcedControllerCount, false,
+        !Settings::instance().joycon_paired_mode()));
 #endif
     const short activeMask = controllersCount > 0
         ? static_cast<short>((1U << controllersCount) - 1U) : 0;
@@ -560,11 +561,9 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
     }
 
 #ifdef __SWITCH__
-    // Keep already-announced virtual devices alive across transient Joy-Con
-    // disconnects so SDL device port assignments in the emulator do not shift.
-    if (!newStream && !Settings::instance().joycon_paired_mode() &&
-        announcedControllerCount > controllersCount)
-        controllersCount = announcedControllerCount;
+    controllersCount = static_cast<short>(stableVirtualGamepadCount(
+        controllersCount, announcedControllerCount, newStream,
+        !Settings::instance().joycon_paired_mode()));
 #endif
     const short mappedControllersCount = controllersCount > 0
         ? static_cast<short>((1U << controllersCount) - 1U) : 0;
