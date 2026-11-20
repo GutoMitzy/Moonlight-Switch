@@ -13,7 +13,7 @@
 
 class StreamingInputOverlay : public brls::Box {
   public:
-    StreamingInputOverlay(StreamingView* streamView);
+    StreamingInputOverlay(StreamingView* streamView, bool enableGyroOnOpen = false);
     ~StreamingInputOverlay() override;
 
     void show();
@@ -30,6 +30,9 @@ class StreamingInputOverlay : public brls::Box {
     bool isKeyboardOpen = false;
     bool hideHints = false;
     bool gyroMouseEnabled = false;
+    bool shortcutReleased = false;
+    bool shortcutPressed = false;
+    std::chrono::steady_clock::time_point shortcutPressedAt = {};
     float gyroMouseSubpixelX = 0.0f;
     float gyroMouseSubpixelY = 0.0f;
 
