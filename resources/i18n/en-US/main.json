@@ -113,6 +113,9 @@
         "title": "Mouse input mode"
     },
     "settings": {
+        "joycon_input_mode": "Joy-Con input mode",
+        "joycon_input_separate": "Separate (two controllers)",
+        "joycon_input_paired": "Paired (one full controller)",
         "audio_backend": "Audio driver",
         "av1": "AV1 (Experimental)",
         "buttons": {
