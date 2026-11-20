@@ -253,6 +253,8 @@ class Settings : public Singleton<Settings> {
         m_gyro_sensitivity = std::isfinite(sensitivity) ? std::clamp(sensitivity, 0.25f, 1.5f) : 1.0f;
     }
     [[nodiscard]] float gyro_sensitivity() const { return m_gyro_sensitivity; }
+    void set_gyro_mouse_adaptive_filter(bool enabled) { m_gyro_mouse_adaptive_filter = enabled; }
+    [[nodiscard]] bool gyro_mouse_adaptive_filter() const { return m_gyro_mouse_adaptive_filter; }
 
     void set_play_audio(bool play_audio) { m_play_audio = play_audio; }
     [[nodiscard]] bool play_audio() const { return m_play_audio; }
@@ -378,6 +380,7 @@ class Settings : public Singleton<Settings> {
     bool m_sops = false;
     bool m_play_audio = false;
     float m_gyro_sensitivity = 1.0f;
+    bool m_gyro_mouse_adaptive_filter = true;
     bool m_write_log = false;
     bool m_swap_ui_keys = false;
     bool m_swap_joycon_stick_to_dpad = false;
