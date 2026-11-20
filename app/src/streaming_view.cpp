@@ -46,7 +46,7 @@ void overrideButtonsIfNeeded(bool value)
 {
 #ifdef PLATFORM_SWITCH
     auto* input = static_cast<SwitchInputManager*>(brls::Application::getPlatform()->getInputManager());
-    input->setHalfJoyConMappingEnabled(value);
+    input->setHalfJoyConMappingEnabled(true);
     input->setScreenshotButtonOverrideMode(ButtonOverrideMode::NONE);
     input->setHomeButtonOverrideMode(ButtonOverrideMode::NONE);
 #ifdef __SWITCH2__
