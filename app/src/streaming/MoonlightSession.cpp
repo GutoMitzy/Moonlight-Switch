@@ -377,9 +377,13 @@ void MoonlightSession::start(ServerCallback<bool> callback, bool is_sunshine) {
 
     GameStreamClient::instance().start(
         m_address, m_config, m_app_id, [this, callback](auto result) {
+            if (m_stop_requested)
+                return;
             if (result.isSuccess()) {
                 m_config = result.value();
                 brls::async([this, callback]() mutable {
+                    if (m_stop_requested)
+                        return;
                     auto m_data =
                         GameStreamClient::instance().server_data(m_address);
 
@@ -404,11 +408,17 @@ void MoonlightSession::start(ServerCallback<bool> callback, bool is_sunshine) {
         });
 }
 
-void MoonlightSession::stop(int terminate_app) {
-    if (m_stop_requested.exchange(true))
-        return;
-
+void MoonlightSession::beginStop() {
+    m_stop_requested = true;
     m_is_active = false;
+    m_restart_pending = false;
+    ++m_session_generation;
+}
+
+void MoonlightSession::stop(int terminate_app) {
+    if (m_stop_started.exchange(true))
+        return;
+    beginStop();
     m_restart_pending = false;
 
     if (terminate_app) {
