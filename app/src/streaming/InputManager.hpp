@@ -62,6 +62,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     void reloadButtonMappingLayout();
     void setInputEnabled(bool enabled) { inputEnabled = enabled; }
     void setGyroMouseActive(bool active);
+    brls::Point consumeGyroMouseDelta();
     static void leftMouseClick();
     static void rightMouseClick();
 
@@ -94,6 +95,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     bool gyroMouseActive = false;
     int gyroMouseController = -1;
     std::chrono::steady_clock::time_point gyroMouseLastSample = {};
+    brls::Point gyroMousePending = {0, 0};
 
     std::atomic<bool> resetControllers = true;
     int announcedControllerCount = -1;
