@@ -505,6 +505,7 @@ void StreamingView::terminate(bool terminateApp) {
     if (terminated)
         return;
     terminated = true;
+    session->beginStop();
 
     MoonlightInputManager::instance().setInputEnabled(false);
     MoonlightInputManager::instance().dropInput();
