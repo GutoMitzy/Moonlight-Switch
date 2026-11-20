@@ -45,6 +45,10 @@ StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView)
                           });
 }
 
+StreamingInputOverlay::~StreamingInputOverlay() {
+    MoonlightInputManager::instance().setGyroMouseActive(false);
+}
+
 void StreamingInputOverlay::onFocusGained() {
     View::onFocusGained();
     Application::giveFocus(this);
@@ -159,6 +163,7 @@ void StreamingInputOverlay::toggleHintsVisibility() {
 
 void StreamingInputOverlay::toggleKeyboard() {
     isKeyboardOpen = !isKeyboardOpen;
+    MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled && !isKeyboardOpen);
     refreshKeyboard();
 }
 
@@ -201,6 +206,14 @@ void StreamingInputOverlay::refreshKeyboard() {
 }
 
 void StreamingInputOverlay::populateHintWithDefaultItems() {
+    actionsToFree.push_back(registerAction("mouse_input/gyro_pointer"_i18n,
+                                           ControllerButton::BUTTON_Y,
+                                           [this](View*) {
+                                               gyroMouseEnabled = !gyroMouseEnabled;
+                                               MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled);
+                                               return true;
+                                           }));
+
     actionsToFree.push_back(registerAction("mouse_input/hide"_i18n,
                                            ControllerButton::BUTTON_BACK,
                                            [this](View* view) {
