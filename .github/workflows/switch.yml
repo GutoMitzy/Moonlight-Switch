@@ -3,6 +3,9 @@ name: Switch
 on:
   workflow_call:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - master
   push:
     branches:
       - joycon-gyro-sensor-isolation-v3
