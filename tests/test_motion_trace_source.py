@@ -19,8 +19,8 @@ class TraceSchemaTests(unittest.TestCase):
         # latest-only sample. This regression check must reflect the v18 API.
         self.assertRegex(
             source,
-            r"hidGetSixAxisSensorStates\\(padSixAxis\\.handles\\[sensor\\],"
-            r"\\s*sixaxis,\\s*maxSamplesPerPoll\\)",
+            r"hidGetSixAxisSensorStates\(padSixAxis\.handles\[sensor\],"
+            r"\s*sixaxis,\s*maxSamplesPerPoll\)",
         )
         self.assertIn("constexpr std::size_t maxSamplesPerPoll = 8;", source)
         self.assertIn("forEachOldestMotionSample(sixaxis, samples,", source)
