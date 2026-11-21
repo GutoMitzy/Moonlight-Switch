@@ -22,6 +22,7 @@ class MoonlightSession {
     static void requestRestart();
 
     void start(ServerCallback<bool> callback, bool is_sunshine);
+    void beginStop();
     void stop(int terminate_app);
     void set_address(const std::string& address) { m_address = address; }
 
@@ -92,11 +93,13 @@ class MoonlightSession {
     std::atomic<bool> m_is_active{false};
     std::atomic<bool> m_is_terminated{false};
     std::atomic<bool> m_stop_requested{false};
+    std::atomic<bool> m_stop_started{false};
     uint64_t m_generation = 0;
     bool m_connection_status_is_poor = false;
     bool m_suspended = false;
     bool m_invalidate_renderer_pending = false;
     bool m_restart_pending = false;
+    bool m_restart_in_progress = false;
     bool m_use_hdr = false;
 
     SessionStats m_session_stats = {};

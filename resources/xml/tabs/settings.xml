@@ -129,6 +129,9 @@
                 paddingTop="60"
                 lineTop="1px"/>
 
+            <brls:SelectorCell
+                id="joycon_input_mode"/>
+
             <brls:BooleanCell
                 id="swap_stick_to_dpad"/>
 

@@ -741,9 +741,16 @@ void GameStreamClient::start(const std::string& address,
         address, "Firstly call connect() & pair()...", callback,
         [this, app_id](const std::string& cachedAddress,
                        ServerCallback<STREAM_CONFIGURATION>& callback) {
+            int controllerCount = brls::Application::getPlatform()
+                ->getInputManager()->getControllersConnectedCount();
+            controllerCount = std::clamp(controllerCount, 0, 16);
+            const int gamepadMask = controllerCount > 0
+                ? static_cast<int>((1U << controllerCount) - 1U) : 1;
+            brls::Logger::info("GameStream: launching with {} controllers (mask=0x{:x})",
+                controllerCount, gamepadMask);
             int status = gs_start_app(&m_server_data[cachedAddress], &m_config,
                                       app_id, Settings::instance().sops(),
-                                      Settings::instance().play_audio(), 0x1);
+                                      Settings::instance().play_audio(), gamepadMask);
 
             brls::sync([this, callback, status] {
                 if (status == GS_OK) {

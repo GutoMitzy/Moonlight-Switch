@@ -8,11 +8,12 @@
 #include "streaming_input_overlay.hpp"
 #include "InputManager.hpp"
 #include <Limelight.h>
+#include <cmath>
 
 using namespace brls;
 
-StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView)
-    : streamView(streamView) {
+StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView, bool enableGyroOnOpen)
+    : streamView(streamView), gyroMouseEnabled(enableGyroOnOpen) {
     this->inflateFromXMLRes("xml/views/stream_input_overlay.xml");
 
     inner->setHideHighlightBackground(true);
@@ -33,6 +34,13 @@ StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView)
         [this](TapGestureStatus status, Sound* sound) {}));
 
     populateHintWithDefaultItems();
+    if (gyroMouseEnabled) {
+        MoonlightInputManager::instance().setGyroMouseActive(true);
+        if (Application::contentWidth > 0 && Application::contentHeight > 0)
+            LiSendMousePositionEvent(
+                Application::contentWidth / 2, Application::contentHeight / 2,
+                Application::contentWidth, Application::contentHeight);
+    }
 
     inner->registerAction("hints/back"_i18n, ControllerButton::BUTTON_B,
                           [this](View* view) {
@@ -45,6 +53,10 @@ StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView)
                           });
 }
 
+StreamingInputOverlay::~StreamingInputOverlay() {
+    MoonlightInputManager::instance().setGyroMouseActive(false);
+}
+
 void StreamingInputOverlay::onFocusGained() {
     View::onFocusGained();
     Application::giveFocus(this);
@@ -53,6 +65,30 @@ void StreamingInputOverlay::onFocusGained() {
 void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
                                  float height, Style style, FrameContext* ctx) {
     Box::draw(vg, x, y, width, height, style, ctx);
+
+    const auto options = Settings::instance().mouse_input_options();
+    if (!options.buttons.empty()) {
+        ControllerState shortcutState = {};
+        Application::getPlatform()->getInputManager()
+            ->updateUnifiedControllerState(&shortcutState);
+        bool down = true;
+        for (const auto button : options.buttons)
+            down &= shortcutState.buttons[button];
+        if (!down) {
+            shortcutReleased = true;
+            shortcutPressed = false;
+        } else if (shortcutReleased) {
+            const auto now = std::chrono::steady_clock::now();
+            if (!shortcutPressed) {
+                shortcutPressed = true;
+                shortcutPressedAt = now;
+            } else if (now - shortcutPressedAt >=
+                       std::chrono::seconds(options.holdTime)) {
+                dismiss();
+                return;
+            }
+        }
+    }
 
     // Keyboard
     if (keyboard) {
@@ -93,7 +129,19 @@ void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
         if (y < 2 && y > -2)
             y = 0;
 
-        if (x != 0 || y != 0) {
+        if (gyroMouseEnabled) {
+            auto cursor = MoonlightInputManager::instance().consumeGyroMousePosition();
+            if (cursor && Application::contentWidth > 0 &&
+                Application::contentHeight > 0) {
+                LiSendMousePositionEvent(
+                    cursor->x * Application::contentWidth,
+                    cursor->y * Application::contentHeight,
+                    Application::contentWidth,
+                    Application::contentHeight);
+            }
+        }
+
+        if (!gyroMouseEnabled && (x != 0 || y != 0)) {
             float multiplier =
                 Settings::instance().get_mouse_speed_multiplier() / 100.f *
                     1.5f +
@@ -159,6 +207,7 @@ void StreamingInputOverlay::toggleHintsVisibility() {
 
 void StreamingInputOverlay::toggleKeyboard() {
     isKeyboardOpen = !isKeyboardOpen;
+    MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled && !isKeyboardOpen);
     refreshKeyboard();
 }
 
@@ -201,6 +250,24 @@ void StreamingInputOverlay::refreshKeyboard() {
 }
 
 void StreamingInputOverlay::populateHintWithDefaultItems() {
+    actionsToFree.push_back(registerAction("mouse_input/gyro_pointer"_i18n,
+                                           ControllerButton::BUTTON_Y,
+                                           [this](View*) {
+                                               gyroMouseEnabled = !gyroMouseEnabled;
+                                               gyroMouseSubpixelX = 0.0f;
+                                               gyroMouseSubpixelY = 0.0f;
+                                               MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled);
+                                               if (gyroMouseEnabled && Application::contentWidth > 0
+                                                   && Application::contentHeight > 0) {
+                                                   LiSendMousePositionEvent(
+                                                       Application::contentWidth / 2,
+                                                       Application::contentHeight / 2,
+                                                       Application::contentWidth,
+                                                       Application::contentHeight);
+                                               }
+                                               return true;
+                                           }));
+
     actionsToFree.push_back(registerAction("mouse_input/hide"_i18n,
                                            ControllerButton::BUTTON_BACK,
                                            [this](View* view) {
@@ -208,9 +275,22 @@ void StreamingInputOverlay::populateHintWithDefaultItems() {
                                                 return true;
                                             }));
 
-    actionsToFree.push_back(registerAction("mouse_input/mouse"_i18n,
+    actionsToFree.push_back(registerAction("mouse_input/recenter"_i18n,
                                            ControllerButton::BUTTON_LSB,
-                                           [](View* view) { return true; }));
+                                           [this](View*) {
+                                               if (!gyroMouseEnabled)
+                                                   return true;
+                                               gyroMouseSubpixelX = 0.0f;
+                                               gyroMouseSubpixelY = 0.0f;
+                                               MoonlightInputManager::instance().setGyroMouseActive(true);
+                                               if (Application::contentWidth > 0 && Application::contentHeight > 0)
+                                                   LiSendMousePositionEvent(
+                                                       Application::contentWidth / 2,
+                                                       Application::contentHeight / 2,
+                                                       Application::contentWidth,
+                                                       Application::contentHeight);
+                                               return true;
+                                           }));
 
     actionsToFree.push_back(registerAction("mouse_input/scroll"_i18n,
                                            ControllerButton::BUTTON_RSB,

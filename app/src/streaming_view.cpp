@@ -46,7 +46,7 @@ void overrideButtonsIfNeeded(bool value)
 {
 #ifdef PLATFORM_SWITCH
     auto* input = static_cast<SwitchInputManager*>(brls::Application::getPlatform()->getInputManager());
-    input->setHalfJoyConMappingEnabled(value);
+    input->setHalfJoyConMappingEnabled(true);
     input->setScreenshotButtonOverrideMode(ButtonOverrideMode::NONE);
     input->setHomeButtonOverrideMode(ButtonOverrideMode::NONE);
 #ifdef __SWITCH2__
@@ -352,7 +352,17 @@ void StreamingView::draw(NVGcontext* vg, float x, float y, float width,
         return;
     }
 
+#if defined(PLATFORM_SWITCH) && !defined(__SWITCH2__)
+    // Deko3D renders directly to the physical framebuffer; Borealis view
+    // dimensions are logical coordinates scaled by Application::windowScale.
+    // Use actual output pixels or docked 1920x1080 is drawn in a 1280x720 corner.
+    const int videoWidth = static_cast<int>(Application::windowWidth);
+    const int videoHeight = static_cast<int>(Application::windowHeight);
+    session->draw(vg, videoWidth > 0 ? videoWidth : static_cast<int>(width),
+                  videoHeight > 0 ? videoHeight : static_cast<int>(height));
+#else
     session->draw(vg, (int) width, (int) height);
+#endif
 
     if (!tempInputLock && session->is_active())
         handleInput();
@@ -505,18 +515,25 @@ void StreamingView::terminate(bool terminateApp) {
     if (terminated)
         return;
     terminated = true;
+    session->beginStop();
 
-    session->stop(terminateApp);
+    MoonlightInputManager::instance().setInputEnabled(false);
+    MoonlightInputManager::instance().dropInput();
 
-    int controllersCount = Application::getPlatform()->getInputManager()->getControllersConnectedCount();
+    const int controllersCount = Application::getPlatform()->getInputManager()->getControllersConnectedCount();
     for (int i = 0; i < controllersCount; i++)
         Application::getPlatform()->getInputManager()->sendRumble(i, 0, 0);
 
-    bool hasOverlays =
-        Application::getActivitiesStack().back() != this->getParentActivity();
-    this->dismiss([this, hasOverlays] {
-        if (hasOverlays)
-            this->dismiss();
+    brls::async([this, terminateApp] {
+        session->stop(terminateApp);
+        brls::sync([this] {
+            const auto& activities = Application::getActivitiesStack();
+            const bool hasOverlays = !activities.empty() && activities.back() != this->getParentActivity();
+            this->dismiss([this, hasOverlays] {
+                if (hasOverlays)
+                    this->dismiss();
+            });
+        });
     });
 }
 
@@ -652,7 +669,7 @@ void StreamingView::handleMouseInputCombo() {
     } else if (buttonState && duration.count() >= options.holdTime && !used) {
         used = true;
 
-        auto overlay = new StreamingInputOverlay(this);
+        auto overlay = new StreamingInputOverlay(this, true);
         Application::pushActivity(new Activity(overlay));
     }
 }

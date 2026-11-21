@@ -384,6 +384,10 @@ void Settings::load() {
             if (json_t* play_audio = json_object_get(settings, "play_audio")) {
                 m_play_audio = json_typeof(play_audio) == JSON_TRUE;
             }
+            if (json_t* gyro_sensitivity = json_object_get(settings, "gyro_sensitivity")) {
+                if (json_is_number(gyro_sensitivity))
+                    set_gyro_sensitivity(static_cast<float>(json_number_value(gyro_sensitivity)));
+            }
             
             if (json_t* write_log = json_object_get(settings, "write_log")) {
                 m_write_log = json_typeof(write_log) == JSON_TRUE;
@@ -396,6 +400,10 @@ void Settings::load() {
             if (json_t* swap_joycon_stick_to_dpad = json_object_get(settings, "swap_joycon_stick_to_dpad")) {
                 m_swap_joycon_stick_to_dpad = json_typeof(swap_joycon_stick_to_dpad) == JSON_TRUE;
             }
+#ifdef __SWITCH__
+            if (json_t* joycon_paired_mode = json_object_get(settings, "joycon_paired_mode"))
+                m_joycon_paired_mode = json_typeof(joycon_paired_mode) == JSON_TRUE;
+#endif
 
             if (json_t* touchscreen_mouse_mode = json_object_get(settings, "touchscreen_mouse_mode")) {
                 m_touchscreen_mouse_mode = json_typeof(touchscreen_mouse_mode) == JSON_TRUE;
@@ -571,6 +579,7 @@ void Settings::load() {
 #ifdef __SWITCH__
     set_halfcon_mapping(brls::HalfJoyConSide::LEFT, m_halfcon_mappings[0]);
     set_halfcon_mapping(brls::HalfJoyConSide::RIGHT, m_halfcon_mappings[1]);
+    set_joycon_paired_mode(m_joycon_paired_mode);
 #endif
 }
 
@@ -589,6 +598,14 @@ void Settings::set_halfcon_mapping(brls::HalfJoyConSide side, const brls::HalfJo
         target[i] = brls::validHalfJoyConAction(mapping[i]) ? mapping[i] : brls::HALF_JOYCON_UNMAPPED;
     static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager())
         ->setHalfJoyConMapping(side, target);
+}
+
+void Settings::set_joycon_paired_mode(bool enabled)
+{
+    m_joycon_paired_mode = enabled;
+    const auto mode = enabled ? brls::JoyConInputMode::PAIRED : brls::JoyConInputMode::SEPARATE;
+    static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager())
+        ->setJoyConInputMode(mode);
 }
 #endif
 
@@ -660,9 +677,13 @@ void Settings::save()
             json_object_set_new(settings, "use_hw_decoding", m_use_hw_decoding ? json_true() : json_false());
             json_object_set_new(settings, "sops", m_sops ? json_true() : json_false());
             json_object_set_new(settings, "play_audio", m_play_audio ? json_true() : json_false());
+            json_object_set_new(settings, "gyro_sensitivity", json_real(m_gyro_sensitivity));
             json_object_set_new(settings, "write_log", m_write_log ? json_true() : json_false());
             json_object_set_new(settings, "swap_ui_keys", m_swap_ui_keys ? json_true() : json_false());
             json_object_set_new(settings, "swap_joycon_stick_to_dpad", m_swap_joycon_stick_to_dpad ? json_true() : json_false());
+#ifdef __SWITCH__
+            json_object_set_new(settings, "joycon_paired_mode", m_joycon_paired_mode ? json_true() : json_false());
+#endif
             json_object_set_new(settings, "touchscreen_mouse_mode", m_touchscreen_mouse_mode ? json_true() : json_false());
             json_object_set_new(settings, "swap_mouse_keys", m_swap_mouse_keys ? json_true() : json_false());
             json_object_set_new(settings, "swap_mouse_scroll", m_swap_mouse_scroll ? json_true() : json_false());

@@ -13,6 +13,9 @@
 #include <atomic>
 #include <chrono>
 #include <optional>
+#include "GyroAimPointer.hpp"
+#include "GyroCalibrationHold.hpp"
+#include <array>
 
 // Moonlight ready gamepad
 struct GamepadState {
@@ -61,6 +64,8 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     void updateTouchScreenPanDelta(brls::PanGestureStatus panStatus);
     void reloadButtonMappingLayout();
     void setInputEnabled(bool enabled) { inputEnabled = enabled; }
+    void setGyroMouseActive(bool active);
+    std::optional<brls::Point> consumeGyroMousePosition();
     static void leftMouseClick();
     static void rightMouseClick();
 
@@ -90,6 +95,14 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     std::chrono::steady_clock::time_point lastDesktopScrollEvent;
     bool inputDropped = false;
     bool inputEnabled = true;
+    bool gyroMouseActive = false;
+    int gyroMouseController = -1;
+    std::chrono::steady_clock::time_point gyroMouseLastSample = {};
+    std::chrono::steady_clock::time_point gyroMouseLastControllerCheck = {};
+    std::optional<brls::Point> gyroMousePosition;
+    GyroAimPointer gyroAimPointer;
+    std::array<GyroCalibrationHold, GAMEPADS_MAX> gyroCalibrationHolds;
+
     std::atomic<bool> resetControllers = true;
     int announcedControllerCount = -1;
 
