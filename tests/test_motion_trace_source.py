@@ -15,7 +15,16 @@ class TraceSchemaTests(unittest.TestCase):
         fmt = re.search(r'motionTrace\.write\("([^"]+)"', source)
         self.assertIsNotNone(fmt)
         self.assertEqual(len(re.findall(r"%[-+0-9.]*[a-zA-Z]", fmt.group(1))), 36)
-        self.assertIn("hidGetSixAxisSensorStates(padSixAxis.handles[sensor], &sixaxis, 1)", source)
+        # The docked motion path reads bounded HID history, rather than one
+        # latest-only sample. This regression check must reflect the v18 API.
+        self.assertRegex(
+            source,
+            r"hidGetSixAxisSensorStates\\(padSixAxis\\.handles\\[sensor\\],"
+            r"\\s*sixaxis,\\s*maxSamplesPerPoll\\)",
+        )
+        self.assertIn("constexpr std::size_t maxSamplesPerPoll = 8;", source)
+        self.assertIn("forEachOldestMotionSample(sixaxis, samples,", source)
+        self.assertIn("motionSampleIntervalSeconds(sixaxis.delta_time)", source)
         self.assertIn("if (!accepted)\n            return;", source)
 
     def test_network_schema_and_unchanged_values(self):
