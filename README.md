@@ -1,326 +1,113 @@
-# Moonlight-Switch
+# Moonlight-Switch — Joy-Con Motion Fork
 
-Moonlight-Switch is a port of [Moonlight Game Streaming Project](https://github.com/moonlight-stream "Moonlight Game Streaming Project") for Nintendo Switch and Nintendo Switch 2.
+Este repositório é um fork do [Moonlight-Switch original](https://github.com/XITRIX/Moonlight-Switch), uma versão do [Moonlight Game Streaming](https://github.com/moonlight-stream) para Nintendo Switch e outras plataformas. Ele transmite jogos e aplicativos de um computador para o console, usando um host compatível com o protocolo GameStream, como o [Sunshine](https://github.com/LizardByte/Sunshine).
 
-## Screenshots
-<details>
-  <summary>Preview</summary>
-  <p float="left">
-  <img width="500" src="https://user-images.githubusercontent.com/9553519/135712658-20382345-2da5-4968-9f57-f9f4470ae819.jpg" />
-  <img width="500" src="https://user-images.githubusercontent.com/9553519/135712664-bf2481b2-2791-490d-99a9-2f968682db76.jpg" />
-  <img width="500" src="https://user-images.githubusercontent.com/9553519/135712669-fd8b2495-e1ea-4357-949f-7fa7312da46f.jpg" />
-  <img width="500" src="https://user-images.githubusercontent.com/9553519/135712672-b9ac3785-bd1c-4948-82b2-9b353019feba.jpg" />
-  <img width="500" src="https://user-images.githubusercontent.com/9553519/135712676-aaa85bb7-9517-4a6d-bc35-070df092383c.jpg" />
-  </p>
-</details>
+**Objetivo deste fork:** tornar o uso dos Joy-Cons mais previsível como controles independentes, como pares e como fontes de movimento (giroscópio e acelerômetro), tanto no mouse quanto nos jogos executados no computador.
 
-# Installing
-### Switch
-1. Download latest Moonlight-Switch [release](https://github.com/XITRIX/Moonlight-Switch/releases).
-2. Rename the Switch 1 release NRO to Moonlight-Switch.nro and put it in sdcard:/switch/Moonlight-Switch;
-3. Launch hbmenu over *Title Redirection* (for FULL RAM access);
-4. Launch moonlight.
+> **Estado:** desenvolvimento experimental, especialmente nas mudanças de motion e na transição portátil ↔ dock. Testes automatizados de funções isoladas não substituem testes no console. Os recursos de calibragem local **não** redefinem automaticamente a orientação interna do emulador.
 
-Or download it from [HB App Store](https://apps.fortheusers.org/switch/Moonlight-Switch)
+## Funcionalidades principais
 
-> [!TIP]
-> To be able to use high bitrate setting especially with 1080p - resolution, you need to overclock CPU/GPU of your console.
->
-> To learn more about that you can take a look at [Sys-Clk homebrew](https://github.com/retronx-team/sys-clk) or entire [Atmosphere build - 4IFIR](https://github.com/rashevskyv/4IFIR/blob/main/README_ENG.md) which includes everything you need to overclock your console
+### Mantidas do projeto original
 
-> [!WARNING]
-> I DO NOT RESPOSIBLE FOR ANY DAMAGE TO YOUR CONSOLE IF SOMETHING WILL GO WRONG!
->
-> I am using 4IFIR by myself and not find any issue, but everything is possible. So think by you own head and be responsible for what you do with your devices!
+- Streaming de vídeo, áudio e entrada de jogos/aplicativos, com suporte a Sunshine e controles.
+- Interface navegável por controles, sobreposição durante a sessão, configurações de conexão, gamepad e mouse.
+- Entrada por tela sensível ao toque, teclado e mouse compatíveis.
+- Suporte a outras plataformas e fluxos de compilação presentes no projeto upstream, sem garantia de validação dessas plataformas neste fork.
 
-### Switch 2
-1. Download latest Moonlight-Switch2 [release](https://github.com/XITRIX/Moonlight-Switch/releases).
-2. Extract Moonlight-Switch2-vX.X.X.zip to the root of your SD card;
-3. Launch hbmenu;
-4. Launch moonlight.
+### Adaptações para Joy-Con
 
-### iOS, tvOS and macOS
-Accept [invite for TestFlight](https://testflight.apple.com/join/P9EX5vQ5) and download app from there
+- **Controles separados e pareados:** atribuição lógica dos Joy-Cons esquerdo e direito, com suporte a dois pares (quatro metades) e recuperação de situações específicas de enumeração HID `JoyDual`.
+- **Giroscópio no mouse:** ponteiro baseado em integração angular, suavização adaptativa para movimentos pequenos e bloqueio de deriva em repouso confirmado pelo sensor.
+- **Motion para jogos:** encaminhamento de giroscópio e acelerômetro ao host por eventos de controle, permitindo o uso com controles virtuais que exponham motion.
+- **Calibração de sensores:** correção de viés angular independente por sensor, incluindo calibração automática conservadora durante repouso.
+- **Atalho L3 + R3:** mantenha pressionado por **2 segundos** para solicitar calibração local do jogador e recentralizar o mouse por gyro associado. Mantenha os controles imóveis para a coleta de amostras de repouso. **O atalho não transmite um comando de recentralização do referencial ao emulador.**
+- **Robustez no dock (v18):** reprodução de até oito amostras HID por passagem, integração do mouse pelo intervalo do sensor e nova seleção de fonte ao mudar a configuração física dos controles.
 
-## Discord
-Feel free to join [Moonlight discord server](https://discord.gg/fmtcVPzaG4), you will find me there in "switch-help" channel 
+A estabilidade dessas alterações depende do firmware, da comunicação dos Joy-Cons, da configuração do Sunshine e do programa receptor. Não há garantia de precisão de 90% em hardware sem medições específicas.
 
-## Controls
-### Mouse
-With touch screen you can move your coursor, tap to left click, scroll 2 fingers to scroll.
+## Instalação no Nintendo Switch 1
 
-While touching screen ZR and ZL buttons will work like left and right mouse buttons.
+1. Acesse [Actions — build Switch deste fork](https://github.com/GutoMitzy/Moonlight-Switch/actions/workflows/switch.yml) e escolha uma execução concluída **com sucesso** da branch desejada.
+2. Em **Artifacts**, obtenha o `Moonlight-Switch.nro`. Se o arquivo estiver dentro de um ZIP, extraia-o.
+3. Copie o NRO para `sdmc:/switch/Moonlight-Switch/Moonlight-Switch.nro` (crie o diretório se necessário).
+4. Abra o Homebrew Menu preferencialmente pelo **Title Redirection**, para permitir a memória necessária ao streaming, e inicie o Moonlight-Switch.
+5. Instale e configure o [Sunshine](https://github.com/LizardByte/Sunshine) no computador; associe o computador no Moonlight e inicie o aplicativo ou jogo desejado.
 
-Also while touching screen L and R sticks will work like scrolling wheel.
+O recurso depende de um Switch com ambiente de homebrew. Artefatos de Actions são **builds experimentais**, não releases oficiais do Moonlight-Switch original. O projeto pode incluir suporte a Switch 2, mas o workflow desta branch compila especificamente o **Switch 1**.
 
-USB mouse working as well.
+### Configuração do gyro nos jogos
 
-### Keyboard
-You can use onscreen keyboard, tap 3 fingers on screen to show it.
+No Sunshine, selecione um tipo de controle virtual com suporte a sensores (por exemplo, **DualShock 4**, se disponível na sua instalação). No emulador, associe o jogador à porta virtual correta e configure seu provedor de movimento. O Motion DSU/UDP só funcionará se a ponte entre Sunshine, controle virtual e emulador estiver realmente configurada; o Moonlight não envia automaticamente pacotes DSU diretamente do console para o emulador.
 
-USB keyboard working as well.
+No modo separado, confira a numeração dos dispositivos após conectar ou desconectar Joy-Cons. O comportamento de porta do emulador depende também de seus perfis salvos e da enumeração feita no host.
 
-### Gamepad
-By default, Switch gamepad configured as X360 gamepad (A/B and X/Y swapped). Key mapping available in application settings.
+### Comandos durante o streaming
 
-Up to 5 gamepads (includes handheld mode) supported. Half of joycons are also supported.
+| Ação | Comando |
+| --- | --- |
+| Overlay do jogo | `-` + `+` por padrão (configurável) |
+| Calibrar gyro do jogador | Segurar `L3` + `R3` por 2 segundos |
+| Recentrar o mouse por gyro | Comando do overlay de mouse, quando disponível |
+| Mouse por gyro | Ativar no overlay de entrada/mouse |
 
-### SixAxis
-You should configure your Sunshine server to recognise controller as DS4 one to be able to use Gyro and Accelerometer. Only works for player 1 controller.
+O atalho de calibração exige que o sensor permaneça imóvel para estimar seu viés. Ele **não** substitui a opção de recentralização/calibração de orientação do emulador, se existente.
 
-### Ingame overlay
-To open overlay, press - and + key simultaneously by default or Hold ESC on keyboard.
+## Portátil vs. docked
 
-Key combination and holding time are configurable in settings.
+O modo docked pode aumentar a carga de apresentação de vídeo e exige Joy-Cons destacados, com comunicação sem fio. A v18 tenta reduzir perda de amostras quando os quadros demoram mais, mas não resolve interferências de radiofrequência nem garante latência idêntica.
 
-## NSP forwarder
-App supports NSP forwarders to start stream immediately with predefined configuration. Add app you want to launch in Favorites list first. You can generate forwarder using [NSP Forwarder Generator](https://nsp-forwarder.vercel.app/moonlight)
+Para diagnosticar, compare primeiro portátil **com Joy-Cons destacados** versus docked, usando a mesma resolução, taxa de quadros, controles e jogo. Depois repita no dock em 720p e em resolução maior. Consulte [procedimento e limitações da v18](docs/dock-motion-v18.md).
 
-### Manually
-If you'd like to create it manually, without help of generator, you'll need to create forwarder which will pass thees arguments to the application:
-- `--ip` - IP address of your PC
-- `--appid` - ID of the app to launch, it has to be added into "Favorites list" (you could find it in /switch/Moonlight-Switch/settings.json)
-- `--appname` - The name of the app without any spacings
+## Logs e diagnóstico
 
-example:
-`--ip=192.168.1.101 --appid=1233211234 --appname=Steam`
+Para ativar os registros de gyro, crie o arquivo vazio:
 
-## iOS / visionOS forwarder / deep link
-iOS and visionOS builds register the `moonlightswitch://` URL scheme. The supported deep link
-uses the same parameters as the Switch forwarder:
+```
+sdmc:/switch/Moonlight-Switch/motion_trace.enable
+```
 
-`moonlightswitch://launch?ip=192.168.1.101&appid=1233211234&appname=Steam`
-
-`host` can be used instead of `ip` when launching by host MAC address.
-
-iOS 16+ and visionOS builds also expose Shortcuts actions. `Launch Game` accepts a Moonlight
-`Game` value. Use `Get Favorite Games` to pick from saved favorites, or
-`Create Game` to build a game manually from `Host`, `App ID`, and `App Name`,
-then pass the result to `Launch Game`. Use `Get Game Detail` to extract a
-selected game's `App ID`, `Host`, `App Name`, or `Display Host`, and `Get Game
-Deep Link` to create a `moonlightswitch://` URL from a `Game`. Favorite game rows
-use cached box art when available. `Host` accepts either a paired PC IP address
-or MAC address.
-
-Favorite apps can generate an Apple Shortcut forwarder. The forwarder action opens
-the Shortcuts editor and copies the generated deep link to the clipboard as a
-fallback. Prefer the Moonlight `Launch Game` action on iOS 16+ or visionOS, or
-add an `Open URLs` action and paste the copied `moonlightswitch://` URL on older
-iOS versions. Use Shortcuts' `Add to Home Screen` option to create the icon.
-
-## Localization
-- English (100%)
-- Russian (100%)
-- German (86%)
-- Spanish (72%)
-- Japanese (70%)
-- Chinese (simplified) (86%)
-- Czech (70%) - unsupported yet, as HOS has no such system language
-
-### Contribution
-If you'd like to improve existing language, or add a new one, follow the instruction:
-1. Ask a permission to modify language [here](https://poeditor.com/join/project?hash=9kiCIvN0dc)
-2. Notify me by [creating an issue](https://github.com/XITRIX/Moonlight-Switch/issues/new) with title "[Localization] - {Name of language}", in description write your nickname on POEditor
-3. After translation is done, notify me in issue created earlier
-
-You have 2 options to add that translation:
-1. If you'd like your profile in "contributors" section, you could add that localization by creating a PR
-2. If you don't care, I could do that by myself
-
-If you'd like to test your translation, you could follow build instructions, or ask me to create a build with your localization, I'll attach that build in issue.
-
-> [!WARNING]
-> Currently there is no way to select language inside of app, it takes from system settings, so it is impossible to add locatization, that HOS doesn't support (that happend with Czech language).
-
-## Build Moonlight-Switch
+Reinicie o aplicativo. Os registros disponíveis incluem `motion_hid.csv`, `motion_send.csv` e `motion_pointer.csv`. Para análise:
 
 ```bash
-cd 'folder/to/store/the/sources'
+python3 tools/analyze_motion_trace.py caminho/dos/logs/ --output motion_summary.json
+python3 tools/compare_dock_motion.py portable/ docked/ --output dock_comparison.json
+```
 
-# Clone this repo with submodules
-git clone https://github.com/XITRIX/Moonlight-Switch.git --recursive
+O registro acrescenta I/O e mede principalmente o comportamento **no Switch**. Não demonstra, sozinho, a recepção pelo emulador nem a latência fim a fim. Remova o arquivo `motion_trace.enable` quando não precisar coletar novos dados.
+
+## Compilação
+
+O submódulo Borealis contém modificações necessárias ao suporte dos Joy-Cons. Sempre faça o clone recursivo:
+
+```bash
+git clone --recurse-submodules -b joycon-dock-motion-reliability-v18 https://github.com/GutoMitzy/Moonlight-Switch.git
 cd Moonlight-Switch
+git submodule update --init --recursive
 ```
 
-### Switch
-
-To build for Switch, a standard development environment must first be set up. In order to do so, [refer to the Getting Started guide](https://devkitpro.org/wiki/Getting_Started).
+Para Switch 1, instale o toolchain [devkitPro](https://devkitpro.org/wiki/Getting_Started) e as dependências indicadas pelo projeto:
 
 ```bash
-cmake -B build/switch -DPLATFORM_SWITCH=ON
-make -C build/switch Moonlight.nro -j$(nproc)
+cmake -B build/switch -DCMAKE_BUILD_TYPE=Release -DPLATFORM_SWITCH=ON -DUSE_DEKO3D=ON
+cmake --build build/switch --target Moonlight.nro -j8
 ```
 
-### Switch 2
+O arquivo gerado normalmente fica em `build/switch/Moonlight.nro`. O [workflow de build](.github/workflows/switch.yml) também executa testes e publica o NRO como artefato quando a compilação termina com sucesso.
 
-To build for Switch 2, install [ounce-devkit](https://github.com/ouncebrew/ounce-devkit). Set `DEVKITPRO` to the SDK installation directory, then run:
+Para compilações de outras plataformas, consulte a [documentação do projeto original](https://github.com/XITRIX/Moonlight-Switch) e os scripts presentes neste repositório; elas não são o foco de validação desta branch.
 
-```bash
-export DEVKITPRO=/opt/devkitpro
-bash scripts/switch2/build.sh
-```
+## Origem, licenças e créditos
 
-The resulting package is written to `build/switch2/Moonlight-Switch.nro`.
-Add `--run-tests` to include host regression tests; regular builds skip them.
-Builds automatically reuse downloaded sources, compiled dependencies and app objects.
-Add `--clean-build` to rebuild dependencies and the app from scratch; downloaded
-source archives are retained.
+Este trabalho é derivado do [Moonlight-Switch de XITRIX](https://github.com/XITRIX/Moonlight-Switch) e usa o protocolo do [Moonlight Game Streaming](https://github.com/moonlight-stream).
 
-### PS Vita
+Créditos preservados do projeto original:
 
-To build for PS Vita, install [VitaSDK](https://vitasdk.org/) and the Vita dependencies described in the [Borealis PS Vita guide](https://github.com/xfangfang/borealis/wiki/PS-Vita). The SDK must include FFmpeg and SDL2 built with `VIDEO_VITA_PVR` support. Set `VITASDK` to the SDK installation directory, then run:
+- [Rock88](https://github.com/rock88) e [Moonlight-NX](https://github.com/rock88/moonlight-nx): partes fundamentais do código de streaming.
+- [Xfangfang](https://github.com/xfangfang) e [Borealis](https://github.com/xfangfang/borealis): biblioteca de interface e suporte de plataformas.
+- [Averne](https://github.com/averne) e [FFmpeg](https://github.com/averne/FFmpeg): implementação NVDEC e orientações de decodificação.
+- [Azkali](https://gitlab.com/Azkali) e [Moonlight-NX2](https://gitlab.com/Azkali/moonlight-nx2): contribuições relacionadas ao Switch 2.
+- [Cooler3D](https://github.com/Cooler3Ds): implementação Deko3D e melhorias de desempenho.
+- [AMD GPUOpen FidelityFX-FSR](https://github.com/GPUOpen-Effects/FidelityFX-FSR): implementação MIT de FSR 1.0 (EASU/RCAS) usada no caminho de upscaling Deko3D, © Advanced Micro Devices, Inc.
 
-```bash
-export VITASDK=/opt/vitasdk
-scripts/psv-dev.sh build
-```
-
-The resulting package is written to `build/psvita/Moonlight.vpk`. For installing the first VPK, deploying later builds, capturing PrincessLog output, and checking crash dumps, see the [PS Vita development guide](docs/psv-development.md).
-
-### PC (Windows/Linux/MacOS)
-
-To build for PC, the following components are required:
-
-- cmake/make build system
-- A C++ compiler supporting the C++17 standard
-
-Please refer to the usual sources of information for your particular operating system. Usually the commands needed to build this project will look like this:
-
-```bash
-cmake -B build/pc -DPLATFORM_DESKTOP=ON -DCMAKE_BUILD_TYPE=Release
-make -C build/pc -j$(nproc)
-```
-
-Also, please note that the `resources` folder must be available in the working directory, otherwise the program will fail to find the shaders.
-
-On Linux, enabling **Use hardware decoding** makes the FFmpeg decoder try
-VA-API, CUDA, and VDPAU in that order. The selected backend decodes into GPU
-surfaces and copies NV12, P010, or YUV420P frames back for the OpenGL renderer.
-If no compatible device or driver is available, Moonlight automatically falls
-back to software decoding.
-
-#### Linux and SteamOS releases
-
-Linux release builds are available for x86_64 and ARM64 as AppImage, portable
-tar, DEB, and RPM packages. SteamOS builds target Valve's Steam Linux Runtime 4.
-The Linux release configuration embeds resources and requires a VA-API-enabled
-FFmpeg with H.264 and HEVC hardware configurations.
-
-See the [Linux and SteamOS build and installation guide](docs/linux-distribution.md)
-for package selection, Steam Deck setup, local build commands, and the GitHub
-Actions matrix.
-
-#### Windows (MSYS2)
-
-Windows desktop builds are supported through MSYS2 system packages for both x64 and ARM64.
-
-MSYS2 is recommended under `C:\msys64`.
-
-##### x64 (UCRT64)
-
-Install the required packages:
-
-```bash
-pacman -S --needed --noconfirm \
-  mingw-w64-ucrt-x86_64-gcc \
-  mingw-w64-ucrt-x86_64-cmake \
-  mingw-w64-ucrt-x86_64-ninja \
-  mingw-w64-ucrt-x86_64-pkgconf \
-  mingw-w64-ucrt-x86_64-SDL2 \
-  mingw-w64-ucrt-x86_64-ffmpeg \
-  mingw-w64-ucrt-x86_64-curl \
-  mingw-w64-ucrt-x86_64-mbedtls \
-  mingw-w64-ucrt-x86_64-jansson \
-  mingw-w64-ucrt-x86_64-libpng \
-  mingw-w64-ucrt-x86_64-opus \
-  mingw-w64-ucrt-x86_64-expat \
-  mingw-w64-ucrt-x86_64-zstd
-```
-
-Build with the bundled preset:
-
-These Windows presets default to native D3D11 (DirectX 11). Pass `-DUSE_D3D11=OFF` when configuring only if you want to force the legacy OpenGL path.
-
-```bash
-cmake --preset windows-ucrt64-release
-cmake --build --preset windows-ucrt64-release
-```
-
-The resulting executable is placed in `build/windows-ucrt64`. The build stages the required MSYS2 UCRT64 DLLs beside `Moonlight.exe`; keep the generated `resources` directory there as well, because the UCRT64 build uses external resources instead of `libromfs`.
-
-##### ARM64 (CLANGARM64)
-
-To build a native Windows ARM64 executable, install the CLANGARM64 packages:
-
-```bash
-pacman -S --needed --noconfirm \
-  mingw-w64-clang-aarch64-clang \
-  mingw-w64-clang-aarch64-cmake \
-  mingw-w64-clang-aarch64-ninja \
-  mingw-w64-clang-aarch64-pkgconf \
-  mingw-w64-clang-aarch64-SDL2 \
-  mingw-w64-clang-aarch64-ffmpeg \
-  mingw-w64-clang-aarch64-curl \
-  mingw-w64-clang-aarch64-mbedtls \
-  mingw-w64-clang-aarch64-jansson \
-  mingw-w64-clang-aarch64-libpng \
-  mingw-w64-clang-aarch64-opus \
-  mingw-w64-clang-aarch64-expat \
-  mingw-w64-clang-aarch64-zstd
-```
-
-Build with the ARM64 preset:
-
-```bash
-cmake --preset windows-clangarm64-release
-cmake --build --preset windows-clangarm64-release
-```
-
-The resulting executable is placed in `build/windows-clangarm64`. The build stages the required MSYS2 CLANGARM64 DLLs beside `Moonlight.exe`; keep the generated `resources` directory there as well, because the desktop ARM64 build also uses external resources instead of `libromfs`.
-
-### iOS / tvOS:
-
-```shell
-# build libromfs generator
-./build_libromfs_generator.sh
-
-# prepare vcpkg
-./extern/vcpkg/bootstrap-vcpkg.sh
-```
-
-#### 1. Build for arm64 iphoneOS
-
-```shell
-# 1. Generate a Xcode project
-cmake -B build/ios -G Xcode -DPLATFORM_IOS=ON
-
-# 2. open project in Xcode
-open build/ios/*.xcodeproj
-
-# 3. Set up Team and Bundle Identifiers in Xcode, then connect devices to run.
-```
-
-#### 2. Build for arm64 tvOS
-
-```shell
-# 1. Generate a Xcode project
-cmake -B build/tvos -G Xcode -DPLATFORM_TVOS=ON
-
-# 2. open project in Xcode
-open build/tvos/*.xcodeproj
-
-# 3. Set up Team and Bundle Identifiers in Xcode, then connect devices to run.
-```
-
-## Credits
-Thanks a lot to [Rock88](https://github.com/rock88) and his [Moonlight-NX](https://github.com/rock88/moonlight-nx), lots of streaming code has been lend from it 👍.
-
-[Xfangfang](https://github.com/xfangfang) for maintaining [Borealis](https://github.com/xfangfang/borealis) library. iOS port would not be possible without it. 
-
-[Averne](https://github.com/averne) for NVDEC implementation into [FFmpeg](https://github.com/averne/FFmpeg) and useful guidance of how to enable it 
-
-[Azkali](https://gitlab.com/Azkali) and his [Moonlight-NX2](https://gitlab.com/Azkali/moonlight-nx2) for help and assistance with Switch 2 implementation
-
-Also huge thanks to [Cooler3D](https://github.com/Cooler3Ds) for help with Deko3D implementation and solving performance issues
-
-The Switch deko3d upscaling path includes AMD FidelityFX Super Resolution 1.0 EASU and RCAS code translated from the MIT-licensed [GPUOpen FidelityFX-FSR](https://github.com/GPUOpen-Effects/FidelityFX-FSR) reference implementation. Copyright (c) Advanced Micro Devices, Inc. All rights reserved.
+As licenças, avisos de direitos autorais e atribuições dos componentes upstream continuam aplicáveis. Este fork não é uma distribuição oficial dos mantenedores originais.
