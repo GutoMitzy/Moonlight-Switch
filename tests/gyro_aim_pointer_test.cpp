@@ -9,7 +9,7 @@ int main() {
     aim.setAcceleration(0.0f, 0.0f, -9.80665f);
 
     for (int i = 0; i < 1800; ++i) {
-        assert(aim.update(0.01f, 0.003f, 0.0f, 0.01f, 1.0f, x, y));
+        assert(aim.update(0.01f, 0.003f, 0.0f, 0.01f, 1.0f, x, y, true));
         assert(x == 0.5f && y == 0.5f);
     }
 
@@ -64,9 +64,18 @@ int main() {
 
     aim.reset();
     for (int i = 0; i < 5000; ++i) {
-        assert(aim.update(0.003f, 0.005f, 0.002f, 0.005f, 1.0f, x, y));
+        assert(aim.update(0.003f, 0.005f, 0.002f, 0.005f, 1.0f, x, y, true));
         assert(x == 0.5f && y == 0.5f);
     }
+
+    // A deliberate micro-adjustment must move without a large initial kick.
+    // The HID rest flag is false while the player is moving.
+    aim.reset();
+    const float microStart = x = 0.5f;
+    for (int i = 0; i < 40; ++i)
+        assert(aim.update(0.0f, 0.009f, 0.0f,
+                          0.005f, 1.0f, x, y, false));
+    assert(x < microStart - 0.0001f);
 
     aim.reset();
     assert(aim.update(0.0f, 0.035f, 0.0f, 0.005f, 1.0f, x, y));
