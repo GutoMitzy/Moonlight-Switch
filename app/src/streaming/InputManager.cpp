@@ -413,12 +413,14 @@ void MoonlightInputManager::dropInput() {
     }
 
 #ifdef __SWITCH__
+    auto* topologyInput = static_cast<brls::SwitchInputManager*>(
+        brls::Application::getPlatform()->getInputManager());
     controllersCount = static_cast<short>(stableVirtualGamepadCount(
         controllersCount, announcedControllerCount, false,
-        !Settings::instance().joycon_paired_mode(),
-        static_cast<brls::SwitchInputManager*>(
-            brls::Application::getPlatform()->getInputManager()
-        )->isHandheldInputActive()));
+        !Settings::instance().joycon_paired_mode() &&
+            !Settings::instance().pro_controller_native_mode(),
+        topologyInput->isHandheldInputActive(),
+        topologyInput->getConnectedFullControllerCount()));
 #endif
     const short activeMask = controllersCount > 0
         ? static_cast<short>((1U << controllersCount) - 1U) : 0;
@@ -592,7 +594,8 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
         brls::Application::getPlatform()->getInputManager());
     controllersCount = static_cast<short>(stableVirtualGamepadCount(
         controllersCount, announcedControllerCount, newStream,
-        !Settings::instance().joycon_paired_mode(),
+        !Settings::instance().joycon_paired_mode() &&
+            !Settings::instance().pro_controller_native_mode(),
         topologyInput->isHandheldInputActive(),
         topologyInput->getConnectedFullControllerCount()));
 #endif
@@ -639,7 +642,8 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
         states[i] = getControllerState(i, specialKey);
 
 #ifdef __SWITCH__
-    const bool separateJoyCons = !Settings::instance().joycon_paired_mode();
+    const bool separateJoyCons = !Settings::instance().joycon_paired_mode() &&
+                                 !Settings::instance().pro_controller_native_mode();
     auto* switchInput = static_cast<brls::SwitchInputManager*>(
         brls::Application::getPlatform()->getInputManager());
     const auto now = std::chrono::steady_clock::now();
