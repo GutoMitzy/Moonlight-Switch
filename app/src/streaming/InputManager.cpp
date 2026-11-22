@@ -458,6 +458,19 @@ GamepadState MoonlightInputManager::getControllerState(int controllerNum,
 #ifdef __SWITCH__
     auto* switchInput = static_cast<brls::SwitchInputManager*>(brls::Application::getPlatform()->getInputManager());
     controller = switchInput->isHalfJoyConMappingActive(controllerNum) ? rawController : mapController(rawController);
+    if (Settings::instance().joycon_individual_mode() &&
+        switchInput->getLogicalJoyConSide(controllerNum) != brls::HalfJoyConSide::NONE) {
+        // Both left and right Joy-Con halves become the same virtual
+        // one-stick gamepad. Never require separate SDL profiles by side.
+        controller.buttons[brls::BUTTON_LB] |= controller.buttons[brls::BUTTON_RB];
+        controller.buttons[brls::BUTTON_LT] |= controller.buttons[brls::BUTTON_RT];
+        controller.buttons[brls::BUTTON_LSB] |= controller.buttons[brls::BUTTON_RSB];
+        controller.buttons[brls::BUTTON_START] |= controller.buttons[brls::BUTTON_BACK];
+        controller.buttons[brls::BUTTON_RB] = false;
+        controller.buttons[brls::BUTTON_RT] = false;
+        controller.buttons[brls::BUTTON_RSB] = false;
+        controller.buttons[brls::BUTTON_BACK] = false;
+    }
 #else
     controller = mapController(rawController);
 #endif
@@ -633,14 +646,17 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
         for (auto& hold : gyroCalibrationHolds)
             hold.reset();
 
-    const int groupSize = separateJoyCons ? 2 : 1;
+    // L3+R3 requires two halves in Pairs mode. In Individual mode each
+    // seat is a single Joy-Con; do not consume its only stick click.
+    const bool individualJoyCons = Settings::instance().joycon_individual_mode();
+    const int groupSize = individualJoyCons ? 1 : (separateJoyCons ? 2 : 1);
     for (int first = 0; first < controllersCount; first += groupSize) {
         const int second = separateJoyCons ? first + 1 : first;
         const bool fullPair = second < controllersCount;
         const bool l3 = (states[first].buttonFlags & LS_CLK_FLAG) != 0;
         const bool r3 = fullPair &&
             (states[second].buttonFlags & RS_CLK_FLAG) != 0;
-        const bool combination = l3 && r3;
+        const bool combination = !individualJoyCons && l3 && r3;
         const int group = first / groupSize;
         if (gyroCalibrationHolds[group].update(combination, now)) {
             const bool calibratedLeft =
