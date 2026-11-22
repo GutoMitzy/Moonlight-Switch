@@ -7,6 +7,7 @@
 
 #include "streaming_input_overlay.hpp"
 #include "InputManager.hpp"
+#include "MouseModeCombo.hpp"
 #ifdef __SWITCH__
 #include <borealis/platforms/switch/switch_input.hpp>
 #endif
@@ -91,9 +92,7 @@ void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
         platform->updateUnifiedControllerState(&shortcutState);
     }
     if (!options.buttons.empty()) {
-        bool down = true;
-        for (const auto button : options.buttons)
-            down &= shortcutState.buttons[button];
+        const bool down = mouseModeComboMatches(options.buttons, shortcutState.buttons);
         if (!down) {
             shortcutReleased = true;
             shortcutPressed = false;
