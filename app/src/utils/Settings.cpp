@@ -517,8 +517,8 @@ void Settings::load() {
                 }
             }
             
-            // Existing mouse shortcut is migrated to both sides once; new
-            // independent choices override it without changing other profiles.
+            // Restore original single mouse-mode shortcut. If only the
+            // newer split setting exists, preserve the right Joy-Con choice.
             auto readMouseButtons = [](json_t* array,
                                        std::vector<brls::ControllerButton>& target) {
                 if (!json_is_array(array)) return;
@@ -534,12 +534,9 @@ void Settings::load() {
             };
             readMouseButtons(json_object_get(settings, "mouse_input_buttons"),
                              m_mouse_input_options.buttons);
-            m_mouse_input_options_left.buttons = m_mouse_input_options.buttons;
-            m_mouse_input_options_right.buttons = m_mouse_input_options.buttons;
-            readMouseButtons(json_object_get(settings, "mouse_input_buttons_left"),
-                             m_mouse_input_options_left.buttons);
-            readMouseButtons(json_object_get(settings, "mouse_input_buttons_right"),
-                             m_mouse_input_options_right.buttons);
+            if (!json_is_array(json_object_get(settings, "mouse_input_buttons")))
+                readMouseButtons(json_object_get(settings, "mouse_input_buttons_right"),
+                                 m_mouse_input_options.buttons);
 
             if (json_t* buttons = json_object_get(settings, "guide_key_buttons")) {
                 m_guide_key_options.buttons.clear();
@@ -747,10 +744,7 @@ void Settings::save()
                     json_array_append_new(array, json_integer(button));
                 json_object_set_new(settings, key, array);
             };
-            saveMouseButtons("mouse_input_buttons_left",
-                             m_mouse_input_options_left.buttons);
-            saveMouseButtons("mouse_input_buttons_right",
-                             m_mouse_input_options_right.buttons);
+            saveMouseButtons("mouse_input_buttons", m_mouse_input_options.buttons);
             
             if (json_t* guideKeyButtons = json_array()) { 
                 for (auto button: m_guide_key_options.buttons) {
