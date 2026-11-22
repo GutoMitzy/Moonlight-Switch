@@ -81,6 +81,16 @@ jobs:
             -o /tmp/stable_joycon_identity_test
           /tmp/stable_joycon_identity_test
 
+      - name: Validate physical Joy-Con gyro mouse selection
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include \
+            tests/gyro_mouse_source_selection_test.cpp \
+            -o /tmp/gyro_mouse_source_selection_test
+          /tmp/gyro_mouse_source_selection_test
+          python3 -m unittest discover -s tests -p 'test_gyro_mouse_shortcuts.py' -v
+
       - name: Validate native Pro Controller and mixed Joy-Con seat ordering
         if: matrix.platform == 'switch1'
         run: |
