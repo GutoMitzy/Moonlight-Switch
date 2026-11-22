@@ -5,10 +5,6 @@ name: Switch
 on:
   workflow_dispatch:
   workflow_call:
-  # One-shot correction validation; never on push or PR updates.
-  pull_request:
-    types: [opened]
-    branches: [joycon-fidelity-v20]
 
 permissions:
   contents: read
