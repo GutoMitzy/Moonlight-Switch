@@ -65,7 +65,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     void updateTouchScreenPanDelta(brls::PanGestureStatus panStatus);
     void reloadButtonMappingLayout();
     void setInputEnabled(bool enabled) { inputEnabled = enabled; }
-    void setGyroMouseActive(bool active);
+    void setGyroMouseActive(bool active, int sourceController = -1);
     std::optional<brls::Point> consumeGyroMousePosition();
     static void leftMouseClick();
     static void rightMouseClick();
