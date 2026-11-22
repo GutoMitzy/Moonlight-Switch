@@ -135,6 +135,16 @@
             <brls:DetailCell
                 id="joycon_players"/>
 
+            <brls:Header
+                title="Mouse por giroscópio — atalhos por Joy-Con"
+                paddingTop="40"/>
+
+            <brls:SelectorCell
+                id="gyro_mouse_shortcut_left"/>
+
+            <brls:SelectorCell
+                id="gyro_mouse_shortcut_right"/>
+
             <brls:BooleanCell
                 id="swap_stick_to_dpad"/>
 
