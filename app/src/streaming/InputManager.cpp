@@ -168,21 +168,29 @@ MoonlightInputManager::MoonlightInputManager() {
         });
 }
 
-void MoonlightInputManager::setGyroMouseActive(bool active) {
-    // Overlay explicitly calls setGyroMouseActive(true) to recenter as well,
-    // so setting the same value must still reset the pointer.
+void MoonlightInputManager::setGyroMouseActive(bool active, int sourceController) {
+    // The overlay may call this again to recenter. Preserve the actual
+    // controller chosen by the opening shortcut across these operations.
     gyroMouseActive = active;
-    gyroMouseSource.reset();
     gyroMouseController = -1;
+    gyroMouseSource.reset();
 #ifdef __SWITCH__
     if (active) {
         auto* platformInput = static_cast<brls::SwitchInputManager*>(
             brls::Application::getPlatform()->getInputManager());
-        // Handheld has one unambiguous gyro source. Detached Joy-Cons must
-        // be selected by their own configured left/right physical shortcut.
-        if (platformInput->isHandheldInputActive())
-            gyroMouseController = 0;
+        if (sourceController >= 0 && sourceController < GAMEPADS_MAX) {
+            gyroMouseController = sourceController;
+            gyroMouseSource.select(sourceController,
+                platformInput->getPhysicalJoyConId(sourceController));
+        } else {
+            // Preserve original mouse-overlay operation without a Joy-Con
+            // shortcut: handheld uses its single sensor, otherwise use the
+            // original preferred right Joy-Con behavior.
+            gyroMouseController = platformInput->getPreferredGyroMouseController();
+        }
     }
+#else
+    (void)sourceController;
 #endif
     gyroMouseLastSample = {};
     gyroMouseLastControllerCheck = {};
@@ -580,56 +588,25 @@ GamepadState MoonlightInputManager::getControllerState(int controllerNum,
 void MoonlightInputManager::handleGyroMouseShortcuts(int controllersCount)
 {
 #ifdef __SWITCH__
-    if (!gyroMouseActive)
+    // Source selection happens when the mouse-mode shortcut opens the
+    // overlay, not in the overlay's gyro event handler. Only rebind the
+    // same physical Joy-Con after a Nintendo HID index change.
+    if (!gyroMouseActive || !gyroMouseSource.hardwareId())
         return;
-
+    const auto now = std::chrono::steady_clock::now();
+    if (gyroMouseLastControllerCheck.time_since_epoch().count() != 0 &&
+        now - gyroMouseLastControllerCheck < std::chrono::seconds(1))
+        return;
+    gyroMouseLastControllerCheck = now;
     auto* switchInput = static_cast<brls::SwitchInputManager*>(
         brls::Application::getPlatform()->getInputManager());
-
-    for (int controller = 0; controller < controllersCount &&
-                            controller < GyroMouseSourceSelection::maxControllers; ++controller)
-    {
-        const auto side = switchInput->getLogicalJoyConSide(controller);
-        const int shortcut = side == brls::HalfJoyConSide::LEFT
-            ? Settings::instance().gyro_mouse_shortcut_left()
-            : side == brls::HalfJoyConSide::RIGHT
-                ? Settings::instance().gyro_mouse_shortcut_right() : 5;
-        const bool pressed = switchInput->isJoyConGyroMouseShortcutPressed(
-            controller, shortcut);
-        // A held shortcut fires only once; avoid repeated hidsys serial queries.
-        const bool newPress = pressed && !gyroMouseSource.isHeld(controller);
-        const std::uint64_t id = newPress
-            ? switchInput->getPhysicalJoyConId(controller) : 0;
-        if (gyroMouseSource.update(controller, pressed, id))
-        {
-            gyroMouseController = gyroMouseSource.controller();
-            gyroMouseLastSample = {};
-            gyroAimPointer.reset();
-            gyroMousePosition = brls::Point{0.5f, 0.5f};
-            Logger::info("GYRO_MOUSE: selected physical controller={} side={} id={} active={}",
-                controller, static_cast<int>(side),
-                static_cast<unsigned long long>(gyroMouseSource.hardwareId()),
-                gyroMouseController >= 0);
-        }
-    }
-
-    const auto now = std::chrono::steady_clock::now();
-    if (gyroMouseSource.hardwareId() &&
-        (gyroMouseLastControllerCheck.time_since_epoch().count() == 0 ||
-         now - gyroMouseLastControllerCheck >= std::chrono::seconds(1)))
-    {
-        gyroMouseLastControllerCheck = now;
-        const int rebound = switchInput->findControllerForPhysicalJoyConId(
-            gyroMouseSource.hardwareId());
-        if (gyroMouseSource.rebind(rebound))
-        {
-            gyroMouseController = rebound;
-            gyroMouseLastSample = {};
-            gyroAimPointer.reset();
-            gyroMousePosition = brls::Point{0.5f, 0.5f};
-            Logger::info("GYRO_MOUSE: physical Joy-Con remapped to controller={}",
-                         rebound);
-        }
+    const int rebound = switchInput->findControllerForPhysicalJoyConId(
+        gyroMouseSource.hardwareId());
+    if (gyroMouseSource.rebind(rebound)) {
+        gyroMouseController = rebound;
+        gyroMouseLastSample = {};
+        gyroAimPointer.reset();
+        gyroMousePosition = brls::Point{0.5f, 0.5f};
     }
 #else
     (void)controllersCount;
