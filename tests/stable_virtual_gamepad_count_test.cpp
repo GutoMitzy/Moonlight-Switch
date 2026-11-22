@@ -3,17 +3,31 @@
 
 int main()
 {
-    // Four independent Joy-Con seats exist even before any physical pad
-    // appears, so emulators opened afterwards see a fixed SDL device set.
-    assert(stableVirtualGamepadCount(0, -1, true, true, false) == 4);
-    assert(stableVirtualGamepadCount(0, 4, false, true, false) == 4);
-    assert(stableVirtualGamepadCount(1, -1, true, true, false) == 4);
-    assert(stableVirtualGamepadCount(2, 4, false, true, false) == 4);
-    assert(stableVirtualGamepadCount(4, 4, false, true, false) == 4);
-    assert(stableVirtualGamepadCount(0, 4, true, true, false) == 4);
-    // Preserve original behavior in handheld and normal paired modes.
-    assert(stableVirtualGamepadCount(1, -1, true, true, true) == 1);
-    assert(stableVirtualGamepadCount(1, 4, false, true, true) == 1);
-    assert(stableVirtualGamepadCount(2, 4, false, false, false) == 2);
-    assert(stableVirtualGamepadCount(0, 4, true, false, false) == 0);
+    // Detached Joy-Con seats exist before hardware connects.
+    assert(stableVirtualGamepadCount(0, -1, true, true, false, 0) == 4);
+    assert(stableVirtualGamepadCount(0, 4, false, true, false, 0) == 4);
+    assert(stableVirtualGamepadCount(1, 4, false, true, false, 0) == 4);
+    assert(stableVirtualGamepadCount(4, 4, false, true, false, 0) == 4);
+
+    // Pro Controller only behaves like upstream Moonlight: one real pad,
+    // including when the user uses the "Separate Joy-Cons" preference.
+    assert(stableVirtualGamepadCount(1, -1, true, true, false, 1) == 1);
+    assert(stableVirtualGamepadCount(2, -1, true, true, false, 2) == 2);
+    assert(stableVirtualGamepadCount(1, 1, false, true, false, 1) == 1);
+
+    // If stream started with zero controllers, it announced four Joy-Con
+    // placeholders; inserting Pro must not remove them mid-game.
+    assert(stableVirtualGamepadCount(1, 4, false, true, false, 1) == 4);
+
+    // Pro first then a Joy-Con pair gives Pro seat 0 plus four Joy-Con seats.
+    assert(stableVirtualGamepadCount(5, 1, false, true, false, 1) == 5);
+    // Joy-Cons first then Pro: Joy-Con seats 0..3, Pro joins at 4.
+    assert(stableVirtualGamepadCount(5, 4, false, true, false, 1) == 5);
+    assert(stableVirtualGamepadCount(6, 5, false, true, false, 2) == 6);
+    assert(stableVirtualGamepadCount(5, 5, false, true, false, 1) == 5);
+
+    // Paired mode and physical handheld mode keep original counts.
+    assert(stableVirtualGamepadCount(1, 4, false, true, true, 0) == 1);
+    assert(stableVirtualGamepadCount(1, -1, true, false, false, 1) == 1);
+    assert(stableVirtualGamepadCount(0, 4, false, false, false, 0) == 0);
 }
