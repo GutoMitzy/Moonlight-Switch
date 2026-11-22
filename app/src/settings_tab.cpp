@@ -607,9 +607,33 @@ SettingsTab::SettingsTab() {
         this->present(new JoyConPlayersView());
         return true;
     });
+    const std::vector<std::string> gyroShortcutChoices = {
+        "SL + SR (recomendado)",
+        "L + ZL / R + ZR",
+        "Clique no analógico",
+        "SL",
+        "SR",
+        "Desativado"
+    };
+    gyroMouseShortcutLeft->setText("Selecionar mouse: Joy-Con esquerdo");
+    gyroMouseShortcutLeft->setData(gyroShortcutChoices);
+    gyroMouseShortcutLeft->setSelection(Settings::instance().gyro_mouse_shortcut_left());
+    gyroMouseShortcutLeft->getEvent()->subscribe([](int selected) {
+        Settings::instance().set_gyro_mouse_shortcut_left(selected);
+        Settings::instance().save();
+    });
+    gyroMouseShortcutRight->setText("Selecionar mouse: Joy-Con direito");
+    gyroMouseShortcutRight->setData(gyroShortcutChoices);
+    gyroMouseShortcutRight->setSelection(Settings::instance().gyro_mouse_shortcut_right());
+    gyroMouseShortcutRight->getEvent()->subscribe([](int selected) {
+        Settings::instance().set_gyro_mouse_shortcut_right(selected);
+        Settings::instance().save();
+    });
 #else
     joyconInputMode->setVisibility(Visibility::GONE);
     joyconPlayers->setVisibility(Visibility::GONE);
+    gyroMouseShortcutLeft->setVisibility(Visibility::GONE);
+    gyroMouseShortcutRight->setVisibility(Visibility::GONE);
 #endif
 
     swapStickToDpad->init("settings/swap_stick_to_dpad"_i18n, Settings::instance().swap_joycon_stick_to_dpad(),
