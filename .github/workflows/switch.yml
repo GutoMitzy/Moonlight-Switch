@@ -1,36 +1,10 @@
 name: Switch
 
+# One NRO build only when explicitly launched. Also reusable by a
+# deliberate workflow_call (e.g. tagged release).
 on:
-  workflow_call:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - master
-  push:
-    branches:
-      - joycon-gyro-sensor-isolation-v3
-      - joycon-motion-units-drift-fix
-      - joycon-motion-stability-overlay-v2
-      - joycon-gyro-stability-exit-audio-v3
-      - joycon-player-order-menu-v4
-      - joycon-gyro-pointer-switch1
-      - joycon-gyro-pointer-overlay-fix-v2
-      - joycon-nav-gyro-pointer-v3
-      - joycon-ui-action-lifetime-fix-v4
-      - joycon-pointer-aim-vertical-menus-v5
-      - joycon-pointer-smooth-center-v6
-      - joycon-pointer-stable-right-v7
-      - switch-dock-resolution-refresh-v8
-      - switch-dock-video-physical-pixels-v9
-      - joycon-motion-fidelity-validation-v10
-      - joycon-home-gyro-mouse-stability-v11
-      - joycon-pointer-orientation-anchor-v12
-      - joycon-gyro-mouse-stable-mapping-v13
-      - joycon-gyro-evidence-v15
-      - joycon-mapping-evidence-v16
-      - joycon-validation-no-build-v17
-      - joycon-dock-motion-reliability-v18
-      - joycon-stable-input-v19
+  workflow_call:
 
 permissions:
   contents: read
