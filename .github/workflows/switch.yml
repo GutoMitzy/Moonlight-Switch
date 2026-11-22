@@ -30,6 +30,7 @@ on:
       - joycon-mapping-evidence-v16
       - joycon-validation-no-build-v17
       - joycon-dock-motion-reliability-v18
+      - joycon-stable-input-v19
 
 permissions:
   contents: read
@@ -96,6 +97,20 @@ jobs:
         if: matrix.platform == 'switch1'
         run: |
           python3 -m unittest discover -s tests -p 'test_compare_dock_motion.py' -v
+
+      - name: Validate wireless HOME owner fallback
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/system_button_owner_test.cpp \
+            -o /tmp/system_button_owner_test
+          /tmp/system_button_owner_test
+
+      - name: Validate wireless input and motion backlog regressions
+        if: matrix.platform == 'switch1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_wireless_input_regressions.py' -v
 
       - name: Validate gyro pointer stability
         if: matrix.platform == 'switch1'
