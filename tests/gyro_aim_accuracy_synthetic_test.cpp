@@ -12,7 +12,7 @@ int main()
 
     int hits = 0;
     float errorTotal = 0.0f;
-    constexpr int trials = 100;
+    constexpr int trials = 1000;
     constexpr float tolerance = 0.01f;
 
     for (int trial = 0; trial < trials; ++trial)
@@ -21,7 +21,7 @@ int main()
         float x = 0.5f;
         float y = 0.5f;
         const int axis = trial % 2;
-        const float rate = 0.015f + 0.0024f * trial;
+        const float rate = 0.009f + 0.0024f * (trial % 100);
 
         for (int sample = 0; sample < 200; ++sample)
         {
@@ -42,7 +42,7 @@ int main()
         hits += error <= tolerance;
     }
 
-    std::printf("Simulated gyro accuracy: %d/%d (mean error %.6f)\\n",
+    std::printf("Synthetic gyro target hits: %d/%d (mean error %.6f)\\n",
                 hits, trials, errorTotal / trials);
-    assert(hits >= 90);
+    assert(hits >= 990);
 }
