@@ -2,16 +2,19 @@
 
 #include <algorithm>
 
-// Do not hot-plug and re-enumerate host devices every time a Joy-Con is attached.
-// Four stable virtual seats are reserved for up to two independent Joy-Con pairs.
-// An absent physical controller produces neutral state on its reserved seat.
+// Preserve stable Sunshine gamepad identities from the *first* packet of a
+// streaming session. Detached Joy-Cons in separate mode always expose four
+// seats, including when no Joy-Con is connected at stream startup.
+// Missing controllers are represented by neutral state, not by hot-unplugging
+// and shifting subsequent gamepad IDs. Handheld and paired layouts keep their
+// original controller counts.
 inline int stableVirtualGamepadCount(int detected, int previous,
                                      bool newStream, bool separateJoyCons,
                                      bool handheld = false)
 {
+    (void)previous;
+    (void)newStream;
     if (!separateJoyCons || handheld)
-        return detected;
-    if (detected > 0 || (!newStream && previous > 0))
-        return 4;
-    return 0;
+        return std::max(0, detected);
+    return 4;
 }
