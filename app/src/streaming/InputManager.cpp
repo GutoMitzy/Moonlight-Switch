@@ -169,8 +169,8 @@ MoonlightInputManager::MoonlightInputManager() {
 }
 
 void MoonlightInputManager::setGyroMouseActive(bool active) {
-    if (gyroMouseActive == active)
-        return;
+    // Overlay explicitly calls setGyroMouseActive(true) to recenter as well,
+    // so setting the same value must still reset the pointer.
     gyroMouseActive = active;
     gyroMouseSource.reset();
     gyroMouseController = -1;
@@ -596,8 +596,8 @@ void MoonlightInputManager::handleGyroMouseShortcuts(int controllersCount)
                 ? Settings::instance().gyro_mouse_shortcut_right() : 5;
         const bool pressed = switchInput->isJoyConGyroMouseShortcutPressed(
             controller, shortcut);
-        // Resolve serial only for a new press, not 60 times/s per Joy-Con.
-        const bool newPress = pressed;
+        // A held shortcut fires only once; avoid repeated hidsys serial queries.
+        const bool newPress = pressed && !gyroMouseSource.isHeld(controller);
         const std::uint64_t id = newPress
             ? switchInput->getPhysicalJoyConId(controller) : 0;
         if (gyroMouseSource.update(controller, pressed, id))
