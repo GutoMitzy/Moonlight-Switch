@@ -594,7 +594,8 @@ SettingsTab::SettingsTab() {
     joyconInputMode->setData({
         "settings/joycon_input_separate"_i18n,
         "settings/joycon_input_paired"_i18n,
-        "Individual (um Joy-Con por jogador)"
+        "Individual (um Joy-Con por jogador)",
+        "Pro Controller (compatibilidade original)"
     });
     joyconInputMode->setSelection(Settings::instance().joycon_input_mode());
     joyconInputMode->getEvent()->subscribe([](int selected) {
