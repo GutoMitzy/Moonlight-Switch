@@ -281,28 +281,8 @@ class Settings : public Singleton<Settings> {
     void set_overlay_options(KeyComboOptions options) { m_overlay_options = std::move(options); }
     [[nodiscard]] KeyComboOptions overlay_options() const { return m_overlay_options; }
 
-    void set_mouse_input_options(KeyComboOptions options) {
-        m_mouse_input_options = options;
-        m_mouse_input_options_left.holdTime = options.holdTime;
-        m_mouse_input_options_right.holdTime = options.holdTime;
-    }
+    void set_mouse_input_options(KeyComboOptions options) { m_mouse_input_options = std::move(options); }
     [[nodiscard]] KeyComboOptions mouse_input_options() const { return m_mouse_input_options; }
-    void set_mouse_input_options_left(KeyComboOptions options) {
-        m_mouse_input_options_left = std::move(options);
-    }
-    void set_mouse_input_options_right(KeyComboOptions options) {
-        m_mouse_input_options_right = std::move(options);
-    }
-    [[nodiscard]] KeyComboOptions mouse_input_options_left() const {
-        auto value = m_mouse_input_options_left;
-        value.holdTime = m_mouse_input_options.holdTime;
-        return value;
-    }
-    [[nodiscard]] KeyComboOptions mouse_input_options_right() const {
-        auto value = m_mouse_input_options_right;
-        value.holdTime = m_mouse_input_options.holdTime;
-        return value;
-    }
 
     void set_volume_amplification(bool allow) { m_volume_amplification = allow; }
     [[nodiscard]] bool get_volume_amplification() const { return m_volume_amplification; }
@@ -441,14 +421,6 @@ class Settings : public Singleton<Settings> {
         .buttons  = { brls::ControllerButton::BUTTON_BACK, brls::ControllerButton::BUTTON_START },
     };
     KeyComboOptions m_mouse_input_options{
-        .holdTime = 0,
-        .buttons = {},
-    };
-    KeyComboOptions m_mouse_input_options_left{
-        .holdTime = 0,
-        .buttons = {},
-    };
-    KeyComboOptions m_mouse_input_options_right{
         .holdTime = 0,
         .buttons = {},
     };
