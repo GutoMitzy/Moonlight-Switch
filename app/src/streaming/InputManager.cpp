@@ -589,7 +589,7 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
         bool announced = true;
         for (int i = 0; i < controllersCount; i++) {
             announced &= LiSendControllerArrivalEvent(
-                             i, mappedControllersCount, LI_CTYPE_UNKNOWN, 0,
+                             i, mappedControllersCount, LI_CTYPE_PS, 0,
                              LI_CCAP_RUMBLE | LI_CCAP_ACCEL | LI_CCAP_GYRO) == 0;
         }
 
