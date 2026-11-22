@@ -17,6 +17,7 @@ class ProControllerCompatibilityTests(unittest.TestCase):
         self.assertIn("if (mode != JoyConInputMode::NATIVE)", source)
         self.assertIn("if (joyConInputMode == JoyConInputMode::PAIRED || nativeInput", source)
         self.assertIn("getConnectedFullControllerCount()", source)
+        self.assertIn("resetStreamingControllerOrder()", source)
 
     def test_pro_count_avoids_joycon_phantom_devices(self):
         count = (ROOT / "app/include/StableVirtualGamepadCount.hpp").read_text()
@@ -25,6 +26,10 @@ class ProControllerCompatibilityTests(unittest.TestCase):
         input_manager = (ROOT / "app/src/streaming/InputManager.cpp").read_text()
         self.assertIn("pro_controller_native_mode()", input_manager)
         self.assertIn("getConnectedFullControllerCount()", input_manager)
+        self.assertIn("fullControllerSession", input_manager)
+        self.assertIn("resetStreamingControllerOrder()", input_manager)
+        self.assertIn("const int firstNewController = newStream ? 0 : previousControllerCount;", input_manager)
+        self.assertIn("for (int i = firstNewController; i < controllersCount; i++)", input_manager)
         self.assertIn("LI_CCAP_RUMBLE | LI_CCAP_ACCEL | LI_CCAP_GYRO", input_manager)
 
     def test_mixed_pro_and_joycon_seat_order_and_motion(self):
