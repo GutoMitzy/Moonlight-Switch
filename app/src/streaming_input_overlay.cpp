@@ -12,8 +12,10 @@
 
 using namespace brls;
 
-StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView, bool enableGyroOnOpen)
-    : streamView(streamView), gyroMouseEnabled(enableGyroOnOpen) {
+StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView, bool enableGyroOnOpen,
+                                                 int sourceController)
+    : streamView(streamView), gyroMouseEnabled(enableGyroOnOpen),
+      gyroSourceController(sourceController) {
     this->inflateFromXMLRes("xml/views/stream_input_overlay.xml");
 
     inner->setHideHighlightBackground(true);
@@ -35,7 +37,7 @@ StreamingInputOverlay::StreamingInputOverlay(StreamingView* streamView, bool ena
 
     populateHintWithDefaultItems();
     if (gyroMouseEnabled) {
-        MoonlightInputManager::instance().setGyroMouseActive(true);
+        MoonlightInputManager::instance().setGyroMouseActive(true, gyroSourceController);
         if (Application::contentWidth > 0 && Application::contentHeight > 0)
             LiSendMousePositionEvent(
                 Application::contentWidth / 2, Application::contentHeight / 2,
@@ -66,11 +68,26 @@ void StreamingInputOverlay::draw(NVGcontext* vg, float x, float y, float width,
                                  float height, Style style, FrameContext* ctx) {
     Box::draw(vg, x, y, width, height, style, ctx);
 
-    const auto options = Settings::instance().mouse_input_options();
+    // Close with the same physical Joy-Con that opened mouse mode; never
+    // aggregate keys from a different controller via unified input state.
+    auto* platform = Application::getPlatform()->getInputManager();
+    KeyComboOptions options = Settings::instance().mouse_input_options();
+    ControllerState shortcutState{};
+#ifdef __SWITCH__
+    if (gyroSourceController >= 0) {
+        auto* switchInput = static_cast<brls::SwitchInputManager*>(platform);
+        const auto side = switchInput->getLogicalJoyConSide(gyroSourceController);
+        if (side == brls::HalfJoyConSide::LEFT)
+            options = Settings::instance().mouse_input_options_left();
+        else if (side == brls::HalfJoyConSide::RIGHT)
+            options = Settings::instance().mouse_input_options_right();
+        switchInput->updateControllerState(&shortcutState, gyroSourceController);
+    } else
+#endif
+    {
+        platform->updateUnifiedControllerState(&shortcutState);
+    }
     if (!options.buttons.empty()) {
-        ControllerState shortcutState = {};
-        Application::getPlatform()->getInputManager()
-            ->updateUnifiedControllerState(&shortcutState);
         bool down = true;
         for (const auto button : options.buttons)
             down &= shortcutState.buttons[button];
@@ -207,7 +224,7 @@ void StreamingInputOverlay::toggleHintsVisibility() {
 
 void StreamingInputOverlay::toggleKeyboard() {
     isKeyboardOpen = !isKeyboardOpen;
-    MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled && !isKeyboardOpen);
+    MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled && !isKeyboardOpen, gyroSourceController);
     refreshKeyboard();
 }
 
@@ -256,7 +273,7 @@ void StreamingInputOverlay::populateHintWithDefaultItems() {
                                                gyroMouseEnabled = !gyroMouseEnabled;
                                                gyroMouseSubpixelX = 0.0f;
                                                gyroMouseSubpixelY = 0.0f;
-                                               MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled);
+                                               MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled, gyroSourceController);
                                                if (gyroMouseEnabled && Application::contentWidth > 0
                                                    && Application::contentHeight > 0) {
                                                    LiSendMousePositionEvent(
@@ -282,7 +299,7 @@ void StreamingInputOverlay::populateHintWithDefaultItems() {
                                                    return true;
                                                gyroMouseSubpixelX = 0.0f;
                                                gyroMouseSubpixelY = 0.0f;
-                                               MoonlightInputManager::instance().setGyroMouseActive(true);
+                                               MoonlightInputManager::instance().setGyroMouseActive(true, gyroSourceController);
                                                if (Application::contentWidth > 0 && Application::contentHeight > 0)
                                                    LiSendMousePositionEvent(
                                                        Application::contentWidth / 2,
