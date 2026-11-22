@@ -16,8 +16,6 @@
 #include "helper.hpp"
 #include "button_selecting_dialog.hpp"
 #include "mapping_layout_editor.hpp"
-#include "halfcon_mapping_view.hpp"
-#include "joycon_players_view.hpp"
 #include "UpscalingSupport.hpp"
 #include <cmath>
 #include <iomanip>
@@ -438,17 +436,6 @@ SettingsTab::SettingsTab() {
     layouts.push_back("settings/keys_mapping_create_new"_i18n);
 
     swapGame->setText("settings/keys_mapping_title"_i18n);
-#ifdef __SWITCH__
-    halfconMapping->setText("halfcon/title"_i18n);
-    halfconMapping->registerClickAction(
-        [this](View*)
-        {
-            this->present(new HalfConMappingView());
-            return true;
-        });
-#else
-    halfconMapping->setVisibility(Visibility::GONE);
-#endif
     swapGame->setDetailTextColor(Application::getTheme()["brls/list/listItem_value_color"]);
     swapGame->setDetailText(layouts[Settings::instance().get_current_mapping_layout()]);
 
@@ -602,38 +589,8 @@ SettingsTab::SettingsTab() {
         Settings::instance().set_joycon_input_mode(selected);
         Settings::instance().save();
     });
-    joyconPlayers->setText("Atribuir jogadores (Joy-Con)");
-    joyconPlayers->registerClickAction([this](View*) {
-        this->present(new JoyConPlayersView());
-        return true;
-    });
-    const std::vector<std::string> gyroShortcutChoices = {
-        "SL + SR (recomendado)",
-        "L + ZL / R + ZR",
-        "Clique no analógico",
-        "SL",
-        "SR",
-        "Desativado"
-    };
-    gyroMouseShortcutLeft->setText("Selecionar mouse: Joy-Con esquerdo");
-    gyroMouseShortcutLeft->setData(gyroShortcutChoices);
-    gyroMouseShortcutLeft->setSelection(Settings::instance().gyro_mouse_shortcut_left());
-    gyroMouseShortcutLeft->getEvent()->subscribe([](int selected) {
-        Settings::instance().set_gyro_mouse_shortcut_left(selected);
-        Settings::instance().save();
-    });
-    gyroMouseShortcutRight->setText("Selecionar mouse: Joy-Con direito");
-    gyroMouseShortcutRight->setData(gyroShortcutChoices);
-    gyroMouseShortcutRight->setSelection(Settings::instance().gyro_mouse_shortcut_right());
-    gyroMouseShortcutRight->getEvent()->subscribe([](int selected) {
-        Settings::instance().set_gyro_mouse_shortcut_right(selected);
-        Settings::instance().save();
-    });
 #else
     joyconInputMode->setVisibility(Visibility::GONE);
-    joyconPlayers->setVisibility(Visibility::GONE);
-    gyroMouseShortcutLeft->setVisibility(Visibility::GONE);
-    gyroMouseShortcutRight->setVisibility(Visibility::GONE);
 #endif
 
     swapStickToDpad->init("settings/swap_stick_to_dpad"_i18n, Settings::instance().swap_joycon_stick_to_dpad(),
@@ -741,18 +698,33 @@ SettingsTab::SettingsTab() {
             Settings::instance().set_mouse_input_options(options);
         });
 
-    mouseInputButtons->setText("settings/overlay_buttons"_i18n);
-    setupButtonsSelectorCell(
-        mouseInputButtons, Settings::instance().mouse_input_options().buttons);
-    mouseInputButtons->registerClickAction([this](View* view) {
-        ButtonSelectingDialog* dialog = ButtonSelectingDialog::create(
+    mouseInputButtonsLeft->setText("Botões para Joy-Con esquerdo");
+    setupButtonsSelectorCell(mouseInputButtonsLeft,
+        Settings::instance().mouse_input_options_left().buttons);
+    mouseInputButtonsLeft->registerClickAction([this](View*) {
+        auto* dialog = ButtonSelectingDialog::create(
             "settings/mouse_input_setup_message"_i18n, [this](auto buttons) {
-                auto options = Settings::instance().mouse_input_options();
+                auto options = Settings::instance().mouse_input_options_left();
                 options.buttons = buttons;
-                Settings::instance().set_mouse_input_options(options);
-                setupButtonsSelectorCell(mouseInputButtons, buttons);
+                Settings::instance().set_mouse_input_options_left(options);
+                Settings::instance().save();
+                setupButtonsSelectorCell(mouseInputButtonsLeft, buttons);
             });
-
+        dialog->open();
+        return true;
+    });
+    mouseInputButtonsRight->setText("Botões para Joy-Con direito");
+    setupButtonsSelectorCell(mouseInputButtonsRight,
+        Settings::instance().mouse_input_options_right().buttons);
+    mouseInputButtonsRight->registerClickAction([this](View*) {
+        auto* dialog = ButtonSelectingDialog::create(
+            "settings/mouse_input_setup_message"_i18n, [this](auto buttons) {
+                auto options = Settings::instance().mouse_input_options_right();
+                options.buttons = buttons;
+                Settings::instance().set_mouse_input_options_right(options);
+                Settings::instance().save();
+                setupButtonsSelectorCell(mouseInputButtonsRight, buttons);
+            });
         dialog->open();
         return true;
     });
