@@ -5,11 +5,6 @@ name: Switch
 on:
   workflow_dispatch:
   workflow_call:
-  # One-shot build for the explicitly requested v20 validation PR.
-  # Only PR creation triggers; later pushes or edits cannot start builds.
-  pull_request:
-    types: [opened]
-    branches: [master]
 
 permissions:
   contents: read
