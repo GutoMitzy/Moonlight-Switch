@@ -86,13 +86,8 @@ MoonlightInputManager::MoonlightInputManager() {
                                    event.data[0], event.data[1], event.data[2]))
                 return;
             if (gyroMouseActive) {
-                if (gyroMouseController < 0 &&
-                    event.type == brls::SensorEventType::GYRO &&
-                    std::hypot(event.data[0], event.data[1], event.data[2]) > 0.15f) {
-                    gyroMouseController = event.controllerIndex;
-                    gyroMouseLastSample = {};
-                    gyroAimPointer.reset();
-                }
+                // Physical button shortcut owns source selection; never
+                // select the first controller that happens to move.
                 if (gyroMouseController == event.controllerIndex) {
                     if (event.type == brls::SensorEventType::ACCEL) {
                         gyroAimPointer.setAcceleration(event.data[0], event.data[1],
@@ -174,13 +169,19 @@ MoonlightInputManager::MoonlightInputManager() {
 }
 
 void MoonlightInputManager::setGyroMouseActive(bool active) {
+    if (gyroMouseActive == active)
+        return;
     gyroMouseActive = active;
+    gyroMouseSource.reset();
     gyroMouseController = -1;
 #ifdef __SWITCH__
     if (active) {
         auto* platformInput = static_cast<brls::SwitchInputManager*>(
             brls::Application::getPlatform()->getInputManager());
-        gyroMouseController = platformInput->getPreferredGyroMouseController();
+        // Handheld has one unambiguous gyro source. Detached Joy-Cons must
+        // be selected by their own configured left/right physical shortcut.
+        if (platformInput->isHandheldInputActive())
+            gyroMouseController = 0;
     }
 #endif
     gyroMouseLastSample = {};
@@ -576,6 +577,65 @@ GamepadState MoonlightInputManager::getControllerState(int controllerNum,
     return gamepadState;
 }
 
+void MoonlightInputManager::handleGyroMouseShortcuts(int controllersCount)
+{
+#ifdef __SWITCH__
+    if (!gyroMouseActive)
+        return;
+
+    auto* switchInput = static_cast<brls::SwitchInputManager*>(
+        brls::Application::getPlatform()->getInputManager());
+
+    for (int controller = 0; controller < controllersCount &&
+                            controller < GyroMouseSourceSelection::maxControllers; ++controller)
+    {
+        const auto side = switchInput->getLogicalJoyConSide(controller);
+        const int shortcut = side == brls::HalfJoyConSide::LEFT
+            ? Settings::instance().gyro_mouse_shortcut_left()
+            : side == brls::HalfJoyConSide::RIGHT
+                ? Settings::instance().gyro_mouse_shortcut_right() : 5;
+        const bool pressed = switchInput->isJoyConGyroMouseShortcutPressed(
+            controller, shortcut);
+        // Resolve serial only for a new press, not 60 times/s per Joy-Con.
+        const bool newPress = pressed;
+        const std::uint64_t id = newPress
+            ? switchInput->getPhysicalJoyConId(controller) : 0;
+        if (gyroMouseSource.update(controller, pressed, id))
+        {
+            gyroMouseController = gyroMouseSource.controller();
+            gyroMouseLastSample = {};
+            gyroAimPointer.reset();
+            gyroMousePosition = brls::Point{0.5f, 0.5f};
+            Logger::info("GYRO_MOUSE: selected physical controller={} side={} id={} active={}",
+                controller, static_cast<int>(side),
+                static_cast<unsigned long long>(gyroMouseSource.hardwareId()),
+                gyroMouseController >= 0);
+        }
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    if (gyroMouseSource.hardwareId() &&
+        (gyroMouseLastControllerCheck.time_since_epoch().count() == 0 ||
+         now - gyroMouseLastControllerCheck >= std::chrono::seconds(1)))
+    {
+        gyroMouseLastControllerCheck = now;
+        const int rebound = switchInput->findControllerForPhysicalJoyConId(
+            gyroMouseSource.hardwareId());
+        if (gyroMouseSource.rebind(rebound))
+        {
+            gyroMouseController = rebound;
+            gyroMouseLastSample = {};
+            gyroAimPointer.reset();
+            gyroMousePosition = brls::Point{0.5f, 0.5f};
+            Logger::info("GYRO_MOUSE: physical Joy-Con remapped to controller={}",
+                         rebound);
+        }
+    }
+#else
+    (void)controllersCount;
+#endif
+}
+
 void MoonlightInputManager::handleControllers(bool specialKey) {
     const bool newStream = resetControllers.exchange(false);
     if (newStream)
@@ -660,6 +720,8 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
     std::array<GamepadState, GAMEPADS_MAX> states{};
     for (int i = 0; i < controllersCount; ++i)
         states[i] = getControllerState(i, specialKey);
+
+    handleGyroMouseShortcuts(controllersCount);
 
 #ifdef __SWITCH__
     const bool separateJoyCons = !Settings::instance().joycon_paired_mode() &&
@@ -747,27 +809,6 @@ void MoonlightInputManager::handleInput(bool ignoreTouch) {
 
     //Do not use gamepad for mouse controll assist if touchscreen mode enabled
     bool specialKey = !ignoreTouch && !Settings::instance().touchscreen_mouse_mode() && states.size() == 1;
-
-#ifdef __SWITCH__
-    if (gyroMouseActive) {
-        const auto now = std::chrono::steady_clock::now();
-        if (gyroMouseLastControllerCheck.time_since_epoch().count() == 0 ||
-            now - gyroMouseLastControllerCheck >= std::chrono::seconds(1)) {
-            gyroMouseLastControllerCheck = now;
-            auto* switchInput = static_cast<brls::SwitchInputManager*>(
-                brls::Application::getPlatform()->getInputManager());
-            const int preferred = switchInput->getPreferredGyroMouseController();
-            if (preferred >= 0 && preferred != gyroMouseController) {
-                Logger::info("GYRO: controller reassigned {} -> {} after HID layout change",
-                             gyroMouseController, preferred);
-                gyroMouseController = preferred;
-                gyroMouseLastSample = {};
-                gyroAimPointer.reset();
-                gyroMousePosition = brls::Point{0.5f, 0.5f};
-            }
-        }
-    }
-#endif
 
     handleControllers(specialKey);
 
