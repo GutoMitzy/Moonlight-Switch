@@ -48,8 +48,7 @@ class SettingsTab : public brls::Box {
     BRLS_BIND(brls::DetailCell, overlayButtons, "overlay_buttons");
     BRLS_BIND(brls::SelectorCell, overlayBySystemButton, "overlay_by_system_button");
     BRLS_BIND(brls::SelectorCell, mouseInputTime, "mouse_input_time");
-    BRLS_BIND(brls::DetailCell, mouseInputButtonsLeft, "mouse_input_buttons_left");
-    BRLS_BIND(brls::DetailCell, mouseInputButtonsRight, "mouse_input_buttons_right");
+    BRLS_BIND(brls::DetailCell, mouseInputButtons, "mouse_input_buttons");
     BRLS_BIND(brls::SelectorCell, keyboardType, "keyboard_type");
     BRLS_BIND(brls::SelectorCell, keyboardFingers, "keyboard_fingers");
     BRLS_BIND(brls::BooleanCell, volumeAmplification, "volume_amplification");
