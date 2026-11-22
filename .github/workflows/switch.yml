@@ -72,6 +72,15 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -p 'test_compare_dock_motion.py' -v
 
+      - name: Validate persistent physical Joy-Con seats
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/stable_joycon_identity_test.cpp \
+            -o /tmp/stable_joycon_identity_test
+          /tmp/stable_joycon_identity_test
+
       - name: Validate wireless HOME owner fallback
         if: matrix.platform == 'switch1'
         run: |
