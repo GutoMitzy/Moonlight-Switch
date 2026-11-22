@@ -13,6 +13,7 @@
 #include <Settings.hpp>
 #include <borealis.hpp>
 #include <chrono>
+#include <array>
 #include <optional>
 #include "GameStreamClient.hpp"
 #include "MoonlightSession.hpp"
@@ -65,6 +66,9 @@ class StreamingView : public brls::Box {
     void handleInput();
     void handleOverlayCombo();
     void handleMouseInputCombo();
+    std::array<bool, GAMEPADS_MAX> mouseComboHeld{};
+    std::array<bool, GAMEPADS_MAX> mouseComboUsed{};
+    std::array<std::chrono::steady_clock::time_point, GAMEPADS_MAX> mouseComboStarted{};
     void addKeyboard();
     void removeKeyboard();
 };
