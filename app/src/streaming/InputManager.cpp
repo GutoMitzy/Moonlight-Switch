@@ -579,7 +579,15 @@ GamepadState MoonlightInputManager::getControllerState(int controllerNum,
 void MoonlightInputManager::handleControllers(bool specialKey) {
     const bool newStream = resetControllers.exchange(false);
     if (newStream)
+    {
         announcedControllerCount = -1;
+        fullControllerSession = false;
+#ifdef __SWITCH__
+        static_cast<brls::SwitchInputManager*>(
+            brls::Application::getPlatform()->getInputManager())
+            ->resetStreamingControllerOrder();
+#endif
+    }
 
     auto controllersCount = brls::Application::getPlatform()
                             ->getInputManager()
