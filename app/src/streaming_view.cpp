@@ -23,6 +23,7 @@
 #include "two_finger_scroll_recognizer.hpp"
 #include <Limelight.h>
 #include <chrono>
+#include <algorithm>
 #include <nanovg.h>
 
 #if defined(__SDL3__)
