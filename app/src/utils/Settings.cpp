@@ -405,6 +405,8 @@ void Settings::load() {
                 m_joycon_paired_mode = json_typeof(joycon_paired_mode) == JSON_TRUE;
             if (json_t* joycon_individual_mode = json_object_get(settings, "joycon_individual_mode"))
                 m_joycon_individual_mode = json_typeof(joycon_individual_mode) == JSON_TRUE;
+            if (json_t* pro_native = json_object_get(settings, "pro_controller_native_mode"))
+                m_pro_controller_native_mode = json_typeof(pro_native) == JSON_TRUE;
 #endif
 
             if (json_t* touchscreen_mouse_mode = json_object_get(settings, "touchscreen_mouse_mode")) {
@@ -581,7 +583,8 @@ void Settings::load() {
 #ifdef __SWITCH__
     set_halfcon_mapping(brls::HalfJoyConSide::LEFT, m_halfcon_mappings[0]);
     set_halfcon_mapping(brls::HalfJoyConSide::RIGHT, m_halfcon_mappings[1]);
-    set_joycon_input_mode(m_joycon_paired_mode ? 1 : (m_joycon_individual_mode ? 2 : 0));
+    set_joycon_input_mode(m_pro_controller_native_mode ? 3
+        : m_joycon_paired_mode ? 1 : (m_joycon_individual_mode ? 2 : 0));
 #endif
 }
 
@@ -611,11 +614,14 @@ void Settings::set_joycon_input_mode(int mode)
 {
     m_joycon_paired_mode = mode == 1;
     m_joycon_individual_mode = mode == 2;
-    const auto physicalMode = m_joycon_paired_mode
-        ? brls::JoyConInputMode::PAIRED
-        : m_joycon_individual_mode
-            ? brls::JoyConInputMode::INDIVIDUAL
-            : brls::JoyConInputMode::SEPARATE;
+    m_pro_controller_native_mode = mode == 3;
+    const auto physicalMode = m_pro_controller_native_mode
+        ? brls::JoyConInputMode::NATIVE
+        : m_joycon_paired_mode
+            ? brls::JoyConInputMode::PAIRED
+            : m_joycon_individual_mode
+                ? brls::JoyConInputMode::INDIVIDUAL
+                : brls::JoyConInputMode::SEPARATE;
     static_cast<brls::SwitchInputManager*>(Application::getPlatform()->getInputManager())
         ->setJoyConInputMode(physicalMode);
 }
@@ -696,6 +702,7 @@ void Settings::save()
 #ifdef __SWITCH__
             json_object_set_new(settings, "joycon_paired_mode", m_joycon_paired_mode ? json_true() : json_false());
             json_object_set_new(settings, "joycon_individual_mode", m_joycon_individual_mode ? json_true() : json_false());
+            json_object_set_new(settings, "pro_controller_native_mode", m_pro_controller_native_mode ? json_true() : json_false());
 #endif
             json_object_set_new(settings, "touchscreen_mouse_mode", m_touchscreen_mouse_mode ? json_true() : json_false());
             json_object_set_new(settings, "swap_mouse_keys", m_swap_mouse_keys ? json_true() : json_false());
