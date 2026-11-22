@@ -17,6 +17,7 @@
 #include "button_selecting_dialog.hpp"
 #include "mapping_layout_editor.hpp"
 #include "halfcon_mapping_view.hpp"
+#include "joycon_players_view.hpp"
 #include "UpscalingSupport.hpp"
 #include <cmath>
 #include <iomanip>
@@ -592,14 +593,22 @@ SettingsTab::SettingsTab() {
     joyconInputMode->setText("settings/joycon_input_mode"_i18n);
     joyconInputMode->setData({
         "settings/joycon_input_separate"_i18n,
-        "settings/joycon_input_paired"_i18n
+        "settings/joycon_input_paired"_i18n,
+        "Individual (um Joy-Con por jogador)"
     });
-    joyconInputMode->setSelection(Settings::instance().joycon_paired_mode() ? 1 : 0);
+    joyconInputMode->setSelection(Settings::instance().joycon_input_mode());
     joyconInputMode->getEvent()->subscribe([](int selected) {
-        Settings::instance().set_joycon_paired_mode(selected == 1);
+        Settings::instance().set_joycon_input_mode(selected);
+        Settings::instance().save();
+    });
+    joyconPlayers->setText("Atribuir jogadores (Joy-Con)");
+    joyconPlayers->registerClickAction([this](View*) {
+        this->present(new JoyConPlayersView());
+        return true;
     });
 #else
     joyconInputMode->setVisibility(Visibility::GONE);
+    joyconPlayers->setVisibility(Visibility::GONE);
 #endif
 
     swapStickToDpad->init("settings/swap_stick_to_dpad"_i18n, Settings::instance().swap_joycon_stick_to_dpad(),
