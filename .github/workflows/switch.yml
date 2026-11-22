@@ -1,8 +1,10 @@
 name: Switch
 
+# One NRO build only when explicitly launched. Also reusable by a
+# deliberate workflow_call (e.g. tagged release).
 on:
-  workflow_call:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -19,10 +21,6 @@ jobs:
           - name: Switch 1
             platform: switch1
             image: devkitpro/devkita64:latest
-          - name: Switch 2
-            platform: switch2
-            # Matches the public ounce-devkit Dockerfile's devkitPro toolchain.
-            image: devkitpro/devkita64:20260219
 
     container:
       image: ${{ matrix.image }}
@@ -51,18 +49,164 @@ jobs:
         if: matrix.platform == 'switch1'
         run: dkp-pacman --noconfirm -R switch-enet
 
-      - name: Run cmake
+      - name: Validate sixaxis motion quality rules
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/sixaxis_quality_test.cpp \
+            -o /tmp/sixaxis_quality_test
+          /tmp/sixaxis_quality_test
+
+      - name: Validate bounded chronological motion sample processing
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/motion_sample_timing_test.cpp \
+            -o /tmp/motion_sample_timing_test
+          /tmp/motion_sample_timing_test
+
+      - name: Validate handheld vs docked motion report comparison
+        if: matrix.platform == 'switch1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_compare_dock_motion.py' -v
+
+      - name: Validate persistent physical Joy-Con seats
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/stable_joycon_identity_test.cpp \
+            -o /tmp/stable_joycon_identity_test
+          /tmp/stable_joycon_identity_test
+
+      - name: Validate wireless HOME owner fallback
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/system_button_owner_test.cpp \
+            -o /tmp/system_button_owner_test
+          /tmp/system_button_owner_test
+
+      - name: Validate wireless input and motion backlog regressions
+        if: matrix.platform == 'switch1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_wireless_input_regressions.py' -v
+
+      - name: Validate gyro pointer stability
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/gyro_pointer_filter_test.cpp \
+            -o /tmp/gyro_pointer_filter_test
+          /tmp/gyro_pointer_filter_test
+
+      - name: Validate quaternion aim reference and gyro pointer geometry
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/gyro_aim_pointer_test.cpp \
+            -o /tmp/gyro_aim_pointer_test
+          /tmp/gyro_aim_pointer_test
+
+      - name: Validate gyro calibration hold shortcut
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/gyro_calibration_hold_test.cpp \
+            -o /tmp/gyro_calibration_hold_test
+          /tmp/gyro_calibration_hold_test
+
+      - name: Validate motion event input guards for multiple controllers
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/motion_packet_validation_test.cpp \
+            -o /tmp/motion_packet_validation_test
+          /tmp/motion_packet_validation_test
+
+      - name: Validate synthetic gyro target tracking
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/gyro_aim_accuracy_synthetic_test.cpp \
+            -o /tmp/gyro_aim_accuracy_synthetic_test
+          /tmp/gyro_aim_accuracy_synthetic_test
+
+      - name: Validate stable Joy-Con pairing and controller enumeration
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/stable_joycon_slots_test.cpp \
+            -o /tmp/stable_joycon_slots_test
+          /tmp/stable_joycon_slots_test
+
+      - name: Validate optional gyro motion CSV trace writer
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iextern/borealis/library/include \
+            extern/borealis/tests/motion_trace_csv_test.cpp \
+            -o /tmp/motion_trace_csv_test
+          /tmp/motion_trace_csv_test
+
+      - name: Validate gyro accuracy evaluation tool
+        if: matrix.platform == 'switch1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_gyro_target_evaluation.py' -v
+
+      - name: Validate motion CSV schemas and offline analysis
+        if: matrix.platform == 'switch1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_motion_trace_*.py' -v
+
+      - name: Verify persistent virtual pad seats
+        if: matrix.platform == 'switch1'
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iapp/include tests/stable_virtual_gamepad_count_test.cpp \
+            -o /tmp/stable_virtual_gamepad_count_test
+          /tmp/stable_virtual_gamepad_count_test
+
+      - name: Initial CMake configuration
         if: matrix.platform == 'switch1'
         continue-on-error: true
-        run: cmake -B build/switch -DCMAKE_BUILD_TYPE=Release -DPLATFORM_SWITCH=ON -DUSE_DEKO3D=ON
+        run: |
+          set -o pipefail
+          mkdir -p build/switch
+          cmake -B build/switch -DCMAKE_BUILD_TYPE=Release -DPLATFORM_SWITCH=ON -DUSE_DEKO3D=ON \
+            2>&1 | tee build/switch/configure-initial.log
 
-      - name: Dirty second cmake run
+      - name: Final CMake configuration
         if: matrix.platform == 'switch1'
-        run: cmake -B build/switch -DCMAKE_BUILD_TYPE=Release -DPLATFORM_SWITCH=ON -DUSE_DEKO3D=ON
+        run: |
+          set -euo pipefail
+          cmake -B build/switch -DCMAKE_BUILD_TYPE=Release -DPLATFORM_SWITCH=ON -DUSE_DEKO3D=ON \
+            2>&1 | tee build/switch/configure-final.log
 
-      - name: Run build
+      - name: Build Switch NRO
         if: matrix.platform == 'switch1'
-        run: make -C build/switch Moonlight.nro -j8
+        run: |
+          set -euo pipefail
+          make -C build/switch Moonlight.nro -j8 \
+            2>&1 | tee build/switch/compile.log
+
+      - name: Upload Switch build error diagnostics
+        if: failure() && matrix.platform == 'switch1'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Switch-build-failure-logs
+          path: |
+            build/switch/configure-initial.log
+            build/switch/configure-final.log
+            build/switch/compile.log
+            build/switch/CMakeFiles/CMakeConfigureLog.yaml
+            build/switch/CMakeFiles/CMakeError.log
+            build/switch/CMakeFiles/CMakeOutput.log
+          if-no-files-found: ignore
 
       - name: Rename artifact
         if: matrix.platform == 'switch1'

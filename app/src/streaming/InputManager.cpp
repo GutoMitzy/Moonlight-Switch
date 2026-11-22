@@ -2,9 +2,12 @@
 #ifdef __SWITCH__
 #include <switch.h>
 #include <borealis/platforms/switch/switch_input.hpp>
+#include <borealis/platforms/switch/motion_trace_csv.hpp>
 #endif
 
 #include "InputManager.hpp"
+#include "StableVirtualGamepadCount.hpp"
+#include "MotionPacketValidation.hpp"
 #include "Limelight.h"
 #include "Settings.hpp"
 #include <borealis.hpp>
@@ -79,21 +82,118 @@ MoonlightInputManager::MoonlightInputManager() {
     inputManager
         ->getControllerSensorStateChanged()
         ->subscribe([this](brls::SensorEvent event) {
-            if (!inputEnabled) return;
-            
-            switch (event.type) {
-                case brls::SensorEventType::ACCEL:
-                    LiSendControllerMotionEvent((uint8_t)event.controllerIndex, LI_MOTION_TYPE_ACCEL, event.data[0], event.data[1], event.data[2]);
-                    break;
-                case brls::SensorEventType::GYRO:
-                    // Convert rad/s to deg/s
-                    LiSendControllerMotionEvent((uint8_t)event.controllerIndex, LI_MOTION_TYPE_GYRO, 
-                        event.data[0] * 57.2957795f, 
-                        event.data[1] * 57.2957795f, 
-                        event.data[2] * 57.2957795f);
-                    break;
+            if (!validMotionPacket(event.controllerIndex, GAMEPADS_MAX,
+                                   event.data[0], event.data[1], event.data[2]))
+                return;
+            if (gyroMouseActive) {
+                if (gyroMouseController < 0 &&
+                    event.type == brls::SensorEventType::GYRO &&
+                    std::hypot(event.data[0], event.data[1], event.data[2]) > 0.15f) {
+                    gyroMouseController = event.controllerIndex;
+                    gyroMouseLastSample = {};
+                    gyroAimPointer.reset();
+                }
+                if (gyroMouseController == event.controllerIndex) {
+                    if (event.type == brls::SensorEventType::ACCEL) {
+                        gyroAimPointer.setAcceleration(event.data[0], event.data[1],
+                                                       event.data[2]);
+                    } else if (event.type == brls::SensorEventType::GYRO) {
+#ifdef __SWITCH__
+                        static brls::MotionTraceCsv pointerTrace(
+                            "sdmc:/switch/Moonlight-Switch/motion_trace.enable",
+                            "sdmc:/switch/Moonlight-Switch/motion_pointer.csv",
+                            "t_us,controller,sample,dt_s,gyro_x,gyro_y,gyro_z,zoom,cursor_x,cursor_y,accepted",
+                            120000);
+#endif
+                        const auto now = std::chrono::steady_clock::now();
+                        if (gyroMouseLastSample.time_since_epoch().count() != 0) {
+                            const float wallDt = std::chrono::duration<float>(
+                                now - gyroMouseLastSample).count();
+                            const float dt = event.sampleIntervalSeconds > 0.0f
+                                ? event.sampleIntervalSeconds : wallDt;
+                            const float zoom = 0.6f +
+                                1.2f * Settings::instance().get_mouse_speed_multiplier() /
+                                100.0f;
+                            float posX = 0.5f;
+                            float posY = 0.5f;
+                            const bool accepted = gyroAimPointer.update(
+                                event.data[0], event.data[1], event.data[2],
+                                dt, zoom, posX, posY, event.atRest);
+                            if (accepted)
+                                gyroMousePosition = brls::Point{posX, posY};
+#ifdef __SWITCH__
+                            if (pointerTrace.enabled())
+                                pointerTrace.write("%llu,%d,%u,%.7f,%.6f,%.6f,%.6f,%.4f,%.7f,%.7f,%d",
+                                    static_cast<unsigned long long>(brls::motionTraceMicros()),
+                                    event.controllerIndex, event.timestamp, dt,
+                                    event.data[0], event.data[1], event.data[2],
+                                    zoom, posX, posY, accepted ? 1 : 0);
+#endif
+                        }
+                        gyroMouseLastSample = now;
+                    }
+                }
             }
+            if (!inputEnabled) return;
+            // Recovered historical HID samples are still integrated by the
+            // local pointer, but enqueueing all of them in a burst adds input
+            // lag in Sunshine/emulators after a docked render-frame stall.
+            if (!event.latestInBatch) return;
+            const float gyroScale = Settings::instance().gyro_sensitivity();
+            const bool gyroEvent = event.type == brls::SensorEventType::GYRO;
+            const uint8_t type = gyroEvent ? LI_MOTION_TYPE_GYRO : LI_MOTION_TYPE_ACCEL;
+            const float x = gyroEvent
+                ? event.data[0] * 57.2957795f * gyroScale : event.data[0];
+            const float y = gyroEvent
+                ? event.data[1] * 57.2957795f * gyroScale : event.data[1];
+            const float z = gyroEvent
+                ? event.data[2] * 57.2957795f * gyroScale : event.data[2];
+#ifdef __SWITCH__
+            static brls::MotionTraceCsv networkTrace(
+                "sdmc:/switch/Moonlight-Switch/motion_trace.enable",
+                "sdmc:/switch/Moonlight-Switch/motion_send.csv",
+                "t_us,controller,sample,type,source_x,source_y,source_z,send_x,send_y,send_z,gyro_scale,return_code",
+                240000);
+            const bool tracingNetwork = networkTrace.enabled();
+            const std::uint64_t sentAt = tracingNetwork ? brls::motionTraceMicros() : 0;
+#endif
+            const int result = LiSendControllerMotionEvent(
+                static_cast<uint8_t>(event.controllerIndex), type, x, y, z);
+#ifndef __SWITCH__
+            (void)result;
+#endif
+#ifdef __SWITCH__
+            if (tracingNetwork)
+                networkTrace.write("%llu,%d,%u,%u,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.4f,%d",
+                    static_cast<unsigned long long>(sentAt),
+                    event.controllerIndex, event.timestamp, type,
+                    event.data[0], event.data[1], event.data[2],
+                    x, y, z, gyroScale, result);
+#endif
         });
+}
+
+void MoonlightInputManager::setGyroMouseActive(bool active) {
+    gyroMouseActive = active;
+    gyroMouseController = -1;
+#ifdef __SWITCH__
+    if (active) {
+        auto* platformInput = static_cast<brls::SwitchInputManager*>(
+            brls::Application::getPlatform()->getInputManager());
+        gyroMouseController = platformInput->getPreferredGyroMouseController();
+    }
+#endif
+    gyroMouseLastSample = {};
+    gyroMouseLastControllerCheck = {};
+    gyroAimPointer.reset();
+    gyroMousePosition.reset();
+    desktopMouseRemainder = {0, 0};
+}
+
+std::optional<brls::Point> MoonlightInputManager::consumeGyroMousePosition() {
+    auto position = gyroMousePosition;
+    gyroMousePosition.reset();
+    return position;
 }
 
 void MoonlightInputManager::handleDesktopMouseScroll(brls::Point scroll) {
@@ -312,9 +412,19 @@ void MoonlightInputManager::dropInput() {
         controllersCount = GAMEPADS_MAX;
     }
 
+#ifdef __SWITCH__
+    controllersCount = static_cast<short>(stableVirtualGamepadCount(
+        controllersCount, announcedControllerCount, false,
+        !Settings::instance().joycon_paired_mode(),
+        static_cast<brls::SwitchInputManager*>(
+            brls::Application::getPlatform()->getInputManager()
+        )->isHandheldInputActive()));
+#endif
+    const short activeMask = controllersCount > 0
+        ? static_cast<short>((1U << controllersCount) - 1U) : 0;
     for (short i = 0; i < controllersCount; i++) {
         res &= LiSendMultiControllerEvent(
-                   i, controllersToMap(), gamepadState.buttonFlags,
+                   i, activeMask, gamepadState.buttonFlags,
                    gamepadState.leftTrigger, gamepadState.rightTrigger,
                    gamepadState.leftStickX, gamepadState.leftStickY,
                    gamepadState.rightStickX, gamepadState.rightStickY) == 0;
@@ -464,27 +574,108 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
         controllersCount = GAMEPADS_MAX;
     }
 
-    short mappedControllersCount = controllersToMap();
+#ifdef __SWITCH__
+    controllersCount = static_cast<short>(stableVirtualGamepadCount(
+        controllersCount, announcedControllerCount, newStream,
+        !Settings::instance().joycon_paired_mode(),
+        static_cast<brls::SwitchInputManager*>(
+            brls::Application::getPlatform()->getInputManager()
+        )->isHandheldInputActive()));
+#endif
+    const short mappedControllersCount = controllersCount > 0
+        ? static_cast<short>((1U << controllersCount) - 1U) : 0;
+    const bool controllerSetChanged = announcedControllerCount != controllersCount;
 
     // The host needs type/capabilities again for every new stream, even when
     // no buttons changed and the controller count stayed the same.
-    if (announcedControllerCount != controllersCount) {
+    if (controllerSetChanged) {
+        const int previousControllerCount = newStream
+            ? 0
+            : std::max(announcedControllerCount, 0);
         bool announced = true;
         for (int i = 0; i < controllersCount; i++) {
             announced &= LiSendControllerArrivalEvent(
-                             i, mappedControllersCount, LI_CTYPE_UNKNOWN, 0,
+                             i, mappedControllersCount, LI_CTYPE_PS, 0,
                              LI_CCAP_RUMBLE | LI_CCAP_ACCEL | LI_CCAP_GYRO) == 0;
         }
+
+        // A zero activeGamepadMask is the protocol signal that removes stale
+        // virtual gamepads after a physical Joy-Con is disconnected.
+        GamepadState neutralState{};
+        for (int i = controllersCount; i < previousControllerCount; i++) {
+            const int result = LiSendMultiControllerEvent(
+                i, mappedControllersCount, neutralState.buttonFlags,
+                neutralState.leftTrigger, neutralState.rightTrigger,
+                neutralState.leftStickX, neutralState.leftStickY,
+                neutralState.rightStickX, neutralState.rightStickY);
+            announced &= result == 0;
+            if (result != 0)
+                Logger::warning("StreamingView: failed to deactivate controller {}", i);
+        }
+
         if (announced) {
-            Logger::debug("StreamingView: announced {} controller(s)", controllersCount);
+            Logger::info("StreamingView: active controllers changed {} -> {} (mask=0x{:x})",
+                previousControllerCount, controllersCount, mappedControllersCount);
             announcedControllerCount = controllersCount;
         }
     }
 
-    for (int i = 0; i < controllersCount; i++) {
-        GamepadState gamepadState = getControllerState(i, specialKey);
+    std::array<GamepadState, GAMEPADS_MAX> states{};
+    for (int i = 0; i < controllersCount; ++i)
+        states[i] = getControllerState(i, specialKey);
 
-        if (newStream || !gamepadState.is_equal(lastGamepadStates[i])) {
+#ifdef __SWITCH__
+    const bool separateJoyCons = !Settings::instance().joycon_paired_mode();
+    auto* switchInput = static_cast<brls::SwitchInputManager*>(
+        brls::Application::getPlatform()->getInputManager());
+    const auto now = std::chrono::steady_clock::now();
+    if (newStream)
+        for (auto& hold : gyroCalibrationHolds)
+            hold.reset();
+
+    const int groupSize = separateJoyCons ? 2 : 1;
+    for (int first = 0; first < controllersCount; first += groupSize) {
+        const int second = separateJoyCons ? first + 1 : first;
+        const bool fullPair = second < controllersCount;
+        const bool l3 = (states[first].buttonFlags & LS_CLK_FLAG) != 0;
+        const bool r3 = fullPair &&
+            (states[second].buttonFlags & RS_CLK_FLAG) != 0;
+        const bool combination = l3 && r3;
+        const int group = first / groupSize;
+        if (gyroCalibrationHolds[group].update(combination, now)) {
+            const bool calibratedLeft =
+                switchInput->requestSixAxisCalibrationForController(first);
+            const bool calibratedRight = separateJoyCons
+                ? switchInput->requestSixAxisCalibrationForController(second)
+                : calibratedLeft;
+            if (calibratedLeft && calibratedRight) {
+                if (gyroMouseActive &&
+                    (gyroMouseController == first ||
+                     gyroMouseController == second)) {
+                    gyroAimPointer.reset();
+                    gyroMouseLastSample = {};
+                    gyroMousePosition = brls::Point{0.5f, 0.5f};
+                }
+                brls::Logger::info(
+                    "GYRO: L3+R3 calibration requested player={} controllers={}/{}",
+                    group + 1, first, second);
+            } else {
+                brls::Logger::warning(
+                    "GYRO: calibration unavailable for player={}", group + 1);
+            }
+        }
+
+        if (combination) {
+            states[first].buttonFlags &= ~LS_CLK_FLAG;
+            states[second].buttonFlags &= ~RS_CLK_FLAG;
+        }
+    }
+#endif
+
+    for (int i = 0; i < controllersCount; i++) {
+        GamepadState& gamepadState = states[i];
+
+        if (newStream || controllerSetChanged || !gamepadState.is_equal(lastGamepadStates[i])) {
             lastGamepadStates[i] = gamepadState;
 
             if (LiSendMultiControllerEvent(
@@ -515,6 +706,27 @@ void MoonlightInputManager::handleInput(bool ignoreTouch) {
 
     //Do not use gamepad for mouse controll assist if touchscreen mode enabled
     bool specialKey = !ignoreTouch && !Settings::instance().touchscreen_mouse_mode() && states.size() == 1;
+
+#ifdef __SWITCH__
+    if (gyroMouseActive) {
+        const auto now = std::chrono::steady_clock::now();
+        if (gyroMouseLastControllerCheck.time_since_epoch().count() == 0 ||
+            now - gyroMouseLastControllerCheck >= std::chrono::seconds(1)) {
+            gyroMouseLastControllerCheck = now;
+            auto* switchInput = static_cast<brls::SwitchInputManager*>(
+                brls::Application::getPlatform()->getInputManager());
+            const int preferred = switchInput->getPreferredGyroMouseController();
+            if (preferred >= 0 && preferred != gyroMouseController) {
+                Logger::info("GYRO: controller reassigned {} -> {} after HID layout change",
+                             gyroMouseController, preferred);
+                gyroMouseController = preferred;
+                gyroMouseLastSample = {};
+                gyroAimPointer.reset();
+                gyroMousePosition = brls::Point{0.5f, 0.5f};
+            }
+        }
+    }
+#endif
 
     handleControllers(specialKey);
 
@@ -652,20 +864,16 @@ void MoonlightInputManager::handleInput(bool ignoreTouch) {
 }
 
 short MoonlightInputManager::controllersToMap() {
-    switch (brls::Application::getPlatform()
-                ->getInputManager()
-                ->getControllersConnectedCount()) {
-    case 0:
+    // One bit per connected controller, up to GAMEPADS_MAX (the old table
+    // stopped at 0xF and left the 5th controller out of the active mask)
+    int count = brls::Application::getPlatform()
+                    ->getInputManager()
+                    ->getControllersConnectedCount();
+    if (count <= 0)
         return 0x0;
-    case 1:
-        return 0x1;
-    case 2:
-        return 0x3;
-    case 3:
-        return 0x7;
-    default:
-        return 0xF;
-    }
+    if (count > GAMEPADS_MAX)
+        count = GAMEPADS_MAX;
+    return (short)((1 << count) - 1);
 }
 
 brls::ControllerState

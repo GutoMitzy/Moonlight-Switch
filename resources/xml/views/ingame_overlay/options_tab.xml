@@ -21,6 +21,35 @@
             
             <brls:Header
                 title="@i18n/streaming/input"/>
+
+            <brls:Header
+                title="@i18n/settings/single_joycon"
+                paddingTop="60"
+                lineTop="1px"/>
+
+            <brls:SelectorCell
+                    id="joycon_input_mode"/>
+
+            <brls:BooleanCell
+                    id="swap_stick_to_dpad"/>
+
+            <brls:Header
+                id="gyro_sensitivity_header"
+                title="@i18n/settings/gyro_sensitivity"
+                subtitle=""
+                paddingTop="40"/>
+
+            <brls:Slider
+                id="gyro_sensitivity_slider"
+                width="auto"
+                height="84"/>
+
+            <brls:DetailCell
+                id="gyro_manual_calibration"/>
+
+            <brls:BooleanCell
+                    id="pc_audio"/>
+        
             
             <brls:DetailCell
                 id="input_overlay"/>
@@ -67,14 +96,6 @@
                 height="84"
                 grow="1"/>
 
-            <brls:Header
-                title="@i18n/settings/single_joycon"
-                paddingTop="60"
-                lineTop="1px"/>
-
-            <brls:BooleanCell
-                    id="swap_stick_to_dpad"/>
-        
             <brls:Header
                 id="mouse_speed_header"
                 title="@i18n/streaming/mouse_speed"

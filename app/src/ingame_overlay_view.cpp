@@ -246,6 +246,52 @@ OptionsTab::OptionsTab(StreamingView* streamView) : streamView(streamView) {
                                    Settings::instance().set_touchscreen_mouse_mode(value);
                                });
     
+#ifdef PLATFORM_SWITCH
+    joyconInputMode->setText("settings/joycon_input_mode"_i18n);
+    joyconInputMode->setData({
+        "settings/joycon_input_separate"_i18n,
+        "settings/joycon_input_paired"_i18n
+    });
+    joyconInputMode->setSelection(Settings::instance().joycon_paired_mode() ? 1 : 0);
+    joyconInputMode->getEvent()->subscribe([](int selected) {
+        Settings::instance().set_joycon_paired_mode(selected == 1);
+        Settings::instance().save();
+    });
+#else
+    joyconInputMode->setVisibility(Visibility::GONE);
+#endif
+
+    auto refreshGyroSensitivity = [this](float sensitivity) {
+        gyroSensitivityHeader->setSubtitle(std::to_string(static_cast<int>(sensitivity * 100.0f + 0.5f)) + "%");
+    };
+    const float initialGyroSensitivity = Settings::instance().gyro_sensitivity();
+    refreshGyroSensitivity(initialGyroSensitivity);
+    gyroSensitivitySlider->getProgressEvent()->subscribe([this, refreshGyroSensitivity](float progress) {
+        const float gain = 0.25f + progress * 1.25f;
+        Settings::instance().set_gyro_sensitivity(gain);
+        refreshGyroSensitivity(Settings::instance().gyro_sensitivity());
+        Settings::instance().save();
+    });
+    gyroSensitivitySlider->setProgress((initialGyroSensitivity - 0.25f) / 1.25f);
+#ifdef PLATFORM_SWITCH
+    gyroManualCalibration->setText("settings/gyro_manual_calibration"_i18n);
+    gyroManualCalibration->registerClickAction([](View*) {
+        auto* switchInput = static_cast<SwitchInputManager*>(
+            Application::getPlatform()->getInputManager());
+        switchInput->requestSixAxisManualCalibration();
+        return true;
+    });
+#else
+    gyroManualCalibration->setVisibility(Visibility::GONE);
+#endif
+
+
+    pcAudio->init("settings/paop"_i18n, Settings::instance().play_audio(),
+                  [](bool value) {
+                      Settings::instance().set_play_audio(value);
+                      Settings::instance().save();
+                  });
+
     swapStickToDpad->init("settings/swap_stick_to_dpad"_i18n, Settings::instance().swap_joycon_stick_to_dpad(),
                           [](bool value) { Settings::instance().set_swap_joycon_stick_to_dpad(value); });
 

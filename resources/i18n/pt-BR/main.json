@@ -104,6 +104,8 @@
         "title": "Mapear editor de layout"
     },
     "mouse_input": {
+        "recenter": "Recentralizar ponteiro (clique no analógico)",
+        "gyro_pointer": "Ponteiro por giroscópio (Y): ligar/desligar",
         "delete": "Del",
         "hide": "Hide hints",
         "keyboard": "Teclado",
@@ -113,6 +115,11 @@
         "title": "Modo mouse"
     },
     "settings": {
+        "gyro_manual_calibration": "Calibrar giroscópios (controles parados)",
+        "gyro_sensitivity": "Sensibilidade do giroscópio",
+        "joycon_input_mode": "Modo de entrada dos Joy-Con",
+        "joycon_input_separate": "Separados (dois controles)",
+        "joycon_input_paired": "Em par (um controle completo)",
         "audio_backend": "Audio driver",
         "av1": "AV1 (Experimental)",
         "buttons": {
@@ -206,5 +213,8 @@
         "favorites": "Favoritos",
         "settings": "Configurações"
     },
-    "title": "Moonlight"
+    "title": "Moonlight",
+    "joycon_input_mode": "Modo de entrada dos Joy-Con",
+    "joycon_input_separate": "Separados (dois controles)",
+    "joycon_input_paired": "Em par (um controle completo)"
 }
