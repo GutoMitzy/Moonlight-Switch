@@ -61,25 +61,36 @@ public:
         // Motion HID already supplies corrected angular velocity plus a
         // hardware rest flag. Preserve very small deliberate aiming changes
         // while still rejecting the lowest stationary noise.
-        constexpr float noiseFloor = 0.0065f;
-        constexpr float fullResponse = 0.020f;
+        // Small movements should remain proportional. Bias is already removed
+        // in SixAxisQuality; avoid a large second dead zone in the pointer.
+        constexpr float noiseFloor = 0.0025f;
+        constexpr float fullResponse = 0.014f;
         const float weight = std::clamp(
             (angularSpeed - noiseFloor) / (fullResponse - noiseFloor),
             0.0f, 1.0f);
         // A HID-confirmed resting controller must not drift because of
         // residual sensor bias. Ignore low-speed residuals only while at rest.
+        // HID rest can lag a real movement by several samples. Do not
+        // suppress a deliberate low-speed direction change just because the
+        // previous snapshot still reported atRest.
         moving = weight > 0.0f &&
-                 !(hardwareAtRest && angularSpeed < 0.05f);
+                 !(hardwareAtRest && angularSpeed < 0.009f);
         const Vec3 target = angularRate * (moving ? weight : 0.0f);
 
         // Fast intentional turns receive the raw sample to avoid adding
         // filter delay. Micro-adjustments receive a short low-pass filter.
-        constexpr float smoothingCeiling = 0.12f;
+        constexpr float smoothingCeiling = 0.10f;
         const float smoothing = std::clamp(
             (smoothingCeiling - angularSpeed) / smoothingCeiling,
             0.0f, 1.0f);
-        const float alpha = -std::expm1(-dt * 45.0f);
-        const Vec3 smoothed = filteredRate + (target - filteredRate) * alpha;
+        const float alpha = -std::expm1(-dt * 75.0f);
+        // A low-pass filter can keep its old sign after the player reverses.
+        // Reset only the affected axis, not the whole orientation.
+        Vec3 preceding = filteredRate;
+        if (preceding.x * target.x < 0.0f) preceding.x = 0.0f;
+        if (preceding.y * target.y < 0.0f) preceding.y = 0.0f;
+        if (preceding.z * target.z < 0.0f) preceding.z = 0.0f;
+        const Vec3 smoothed = preceding + (target - preceding) * alpha;
         filteredRate = smoothed * smoothing + target * (1.0f - smoothing);
 
         if (moving) {
@@ -111,11 +122,16 @@ public:
         const float depth = std::max(0.20f, aim.z);
         constexpr float baseFocal = 0.89f;
         const float focal = baseFocal * std::clamp(zoom, 0.6f, 1.8f);
-        const float rawX = 0.5f - aim.x / depth * focal + displayOffsetX;
-        const float rawY = 0.5f + aim.y / depth * focal + displayOffsetY;
+        const float projectedX = 0.5f - aim.x / depth * focal;
+        const float projectedY = 0.5f + aim.y / depth * focal;
+        const float rawX = projectedX + displayOffsetX;
+        const float rawY = projectedY + displayOffsetY;
         if (!moving) {
-            displayOffsetX += displayedX - rawX;
-            displayOffsetY += displayedY - rawY;
+            // Anchor the absolute offset to the current orientation when
+            // stopped, avoiding incremental residual accumulation when the
+            // cursor is pinned at an edge or gravity correction is active.
+            displayOffsetX = displayedX - projectedX;
+            displayOffsetY = displayedY - projectedY;
             normalizedX = displayedX;
             normalizedY = displayedY;
         } else {
