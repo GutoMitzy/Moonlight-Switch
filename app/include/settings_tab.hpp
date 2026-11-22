@@ -36,11 +36,7 @@ class SettingsTab : public brls::Box {
     BRLS_BIND(brls::BooleanCell, pcAudio, "pcAudio");
     BRLS_BIND(brls::BooleanCell, swapUi, "swap_ui");
     BRLS_BIND(brls::DetailCell, swapGame, "swap_game");
-    BRLS_BIND(brls::DetailCell, halfconMapping, "halfcon_mapping");
     BRLS_BIND(brls::SelectorCell, joyconInputMode, "joycon_input_mode");
-    BRLS_BIND(brls::DetailCell, joyconPlayers, "joycon_players");
-    BRLS_BIND(brls::SelectorCell, gyroMouseShortcutLeft, "gyro_mouse_shortcut_left");
-    BRLS_BIND(brls::SelectorCell, gyroMouseShortcutRight, "gyro_mouse_shortcut_right");
     BRLS_BIND(brls::DetailCell, deadzoneStickLeft, "dead_zone_stick_left");
     BRLS_BIND(brls::DetailCell, deadzoneStickRight, "dead_zone_stick_right");
     BRLS_BIND(brls::Header, rumbleForceHeader, "rumble_slider_header");
@@ -52,7 +48,8 @@ class SettingsTab : public brls::Box {
     BRLS_BIND(brls::DetailCell, overlayButtons, "overlay_buttons");
     BRLS_BIND(brls::SelectorCell, overlayBySystemButton, "overlay_by_system_button");
     BRLS_BIND(brls::SelectorCell, mouseInputTime, "mouse_input_time");
-    BRLS_BIND(brls::DetailCell, mouseInputButtons, "mouse_input_buttons");
+    BRLS_BIND(brls::DetailCell, mouseInputButtonsLeft, "mouse_input_buttons_left");
+    BRLS_BIND(brls::DetailCell, mouseInputButtonsRight, "mouse_input_buttons_right");
     BRLS_BIND(brls::SelectorCell, keyboardType, "keyboard_type");
     BRLS_BIND(brls::SelectorCell, keyboardFingers, "keyboard_fingers");
     BRLS_BIND(brls::BooleanCell, volumeAmplification, "volume_amplification");
