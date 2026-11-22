@@ -39,6 +39,8 @@ class SettingsTab : public brls::Box {
     BRLS_BIND(brls::DetailCell, halfconMapping, "halfcon_mapping");
     BRLS_BIND(brls::SelectorCell, joyconInputMode, "joycon_input_mode");
     BRLS_BIND(brls::DetailCell, joyconPlayers, "joycon_players");
+    BRLS_BIND(brls::SelectorCell, gyroMouseShortcutLeft, "gyro_mouse_shortcut_left");
+    BRLS_BIND(brls::SelectorCell, gyroMouseShortcutRight, "gyro_mouse_shortcut_right");
     BRLS_BIND(brls::DetailCell, deadzoneStickLeft, "dead_zone_stick_left");
     BRLS_BIND(brls::DetailCell, deadzoneStickRight, "dead_zone_stick_right");
     BRLS_BIND(brls::Header, rumbleForceHeader, "rumble_slider_header");
