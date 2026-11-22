@@ -15,6 +15,7 @@
 #endif
 #include "AVFrameHolder.hpp"
 #include "InputManager.hpp"
+#include "MouseModeCombo.hpp"
 #include "click_gesture_recognizer.hpp"
 #include "helper.hpp"
 #include "ingame_overlay_view.hpp"
@@ -661,9 +662,7 @@ void StreamingView::handleMouseInputCombo() {
             (side != brls::HalfJoyConSide::NONE || controller == 0)) {
             brls::ControllerState state{};
             switchInput->updateControllerState(&state, controller);
-            pressed = true;
-            for (const auto button : options.buttons)
-                pressed &= state.buttons[button];
+            pressed = mouseModeComboMatches(options.buttons, state.buttons);
         }
         if (!pressed) {
             mouseComboHeld[controller] = false;
@@ -688,8 +687,7 @@ void StreamingView::handleMouseInputCombo() {
     if (options.buttons.empty()) return;
     brls::ControllerState state{};
     Application::getPlatform()->getInputManager()->updateUnifiedControllerState(&state);
-    bool pressed = true;
-    for (auto button : options.buttons) pressed &= state.buttons[button];
+    const bool pressed = mouseModeComboMatches(options.buttons, state.buttons);
     const auto now = std::chrono::steady_clock::now();
     if (!pressed) {
         mouseComboHeld[0] = mouseComboUsed[0] = false;
