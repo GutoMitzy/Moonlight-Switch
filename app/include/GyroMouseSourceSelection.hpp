@@ -53,6 +53,10 @@ public:
         return true;
     }
 
+    [[nodiscard]] bool isHeld(int controller) const {
+        return controller >= 0 && controller < maxControllers &&
+               held[controller];
+    }
     [[nodiscard]] int controller() const { return activeController; }
     [[nodiscard]] std::uint64_t hardwareId() const { return activeHardwareId; }
 
