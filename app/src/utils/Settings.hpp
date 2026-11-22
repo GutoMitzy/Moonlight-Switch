@@ -343,6 +343,20 @@ class Settings : public Singleton<Settings> {
     [[nodiscard]] bool joycon_paired_mode() const { return m_joycon_paired_mode; }
     [[nodiscard]] bool joycon_individual_mode() const { return m_joycon_individual_mode; }
     [[nodiscard]] bool pro_controller_native_mode() const { return m_pro_controller_native_mode; }
+    // Physical Joy-Con mouse activation: 0=SL+SR, 1=L+ZL/R+ZR,
+    // 2=stick press, 3=SL, 4=SR, 5=disabled.
+    void set_gyro_mouse_shortcut_left(int shortcut) {
+        m_gyro_mouse_shortcut_left = std::clamp(shortcut, 0, 5);
+    }
+    void set_gyro_mouse_shortcut_right(int shortcut) {
+        m_gyro_mouse_shortcut_right = std::clamp(shortcut, 0, 5);
+    }
+    [[nodiscard]] int gyro_mouse_shortcut_left() const {
+        return m_gyro_mouse_shortcut_left;
+    }
+    [[nodiscard]] int gyro_mouse_shortcut_right() const {
+        return m_gyro_mouse_shortcut_right;
+    }
 #endif
 
     std::vector<KeyMappingLayout>* get_mapping_laouts() { return &m_mapping_laouts; }
@@ -410,6 +424,8 @@ class Settings : public Singleton<Settings> {
     bool m_joycon_paired_mode = false;
     bool m_joycon_individual_mode = false;
     bool m_pro_controller_native_mode = false;
+    int m_gyro_mouse_shortcut_left = 0;
+    int m_gyro_mouse_shortcut_right = 0;
 #endif
     std::vector<KeyMappingLayout> m_mapping_laouts;
     KeyComboOptions m_guide_key_options {
