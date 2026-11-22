@@ -9,7 +9,7 @@ int main() {
     aim.setAcceleration(0.0f, 0.0f, -9.80665f);
 
     for (int i = 0; i < 1800; ++i) {
-        assert(aim.update(0.01f, 0.003f, 0.0f, 0.01f, 1.0f, x, y, true));
+        assert(aim.update(0.004f, 0.003f, 0.0f, 0.01f, 1.0f, x, y, true));
         assert(x == 0.5f && y == 0.5f);
     }
 
@@ -77,13 +77,32 @@ int main() {
                           0.005f, 1.0f, x, y, false));
     assert(x < microStart - 0.0001f);
 
+    // After moving in one direction, even a very gentle reversal must
+    // immediately reverse the cursor. Old smoothing lag made it drift in
+    // the previous direction until the opposite movement was forceful.
+    aim.reset();
+    for (int i = 0; i < 20; ++i)
+        assert(aim.update(0.0f, 0.05f, 0.0f,
+                          0.005f, 1.0f, x, y, false));
+    const float priorLeft = x;
+    assert(aim.update(0.0f, -0.010f, 0.0f,
+                      0.005f, 1.0f, x, y, false));
+    assert(x > priorLeft);
+
+    // Corrected HID reports of rest may persist briefly when motion starts.
+    // Even then a clear 0.02 rad/s rotation must not remain frozen.
+    aim.reset();
+    assert(aim.update(0.0f, 0.020f, 0.0f,
+                      0.005f, 1.0f, x, y, true));
+    assert(x < 0.5f);
+
     aim.reset();
     assert(aim.update(0.0f, 0.035f, 0.0f, 0.005f, 1.0f, x, y));
     assert(x < 0.5f);
 
     aim.reset();
     for (int i = 0; i < 10000; ++i) {
-        assert(aim.update(0.021f, -0.014f, 0.007f,
+        assert(aim.update(0.004f, -0.003f, 0.002f,
                           0.005f, 1.0f, x, y, true));
         assert(x == 0.5f && y == 0.5f);
     }
