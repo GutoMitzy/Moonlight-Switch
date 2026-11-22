@@ -415,7 +415,10 @@ void MoonlightInputManager::dropInput() {
 #ifdef __SWITCH__
     controllersCount = static_cast<short>(stableVirtualGamepadCount(
         controllersCount, announcedControllerCount, false,
-        !Settings::instance().joycon_paired_mode()));
+        !Settings::instance().joycon_paired_mode(),
+        static_cast<brls::SwitchInputManager*>(
+            brls::Application::getPlatform()->getInputManager()
+        )->isHandheldInputActive()));
 #endif
     const short activeMask = controllersCount > 0
         ? static_cast<short>((1U << controllersCount) - 1U) : 0;
@@ -574,7 +577,10 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
 #ifdef __SWITCH__
     controllersCount = static_cast<short>(stableVirtualGamepadCount(
         controllersCount, announcedControllerCount, newStream,
-        !Settings::instance().joycon_paired_mode()));
+        !Settings::instance().joycon_paired_mode(),
+        static_cast<brls::SwitchInputManager*>(
+            brls::Application::getPlatform()->getInputManager()
+        )->isHandheldInputActive()));
 #endif
     const short mappedControllersCount = controllersCount > 0
         ? static_cast<short>((1U << controllersCount) - 1U) : 0;
