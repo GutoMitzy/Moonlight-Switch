@@ -17,6 +17,15 @@ public:
         held.fill(false);
     }
 
+    void select(int controller, std::uint64_t hardwareId = 0)
+    {
+        reset();
+        if (controller < 0 || controller >= maxControllers)
+            return;
+        activeController = controller;
+        activeHardwareId = hardwareId;
+    }
+
     bool update(int controller, bool pressed, std::uint64_t hardwareId = 0)
     {
         if (controller < 0 || controller >= maxControllers)
