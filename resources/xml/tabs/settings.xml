@@ -163,10 +163,7 @@
                 id="mouse_input_time"/>
             
             <brls:DetailCell
-                id="mouse_input_buttons_left"/>
-
-            <brls:DetailCell
-                id="mouse_input_buttons_right"/>
+                id="mouse_input_buttons"/>
 
             <brls:Header
                 title="@i18n/settings/keyboard"
