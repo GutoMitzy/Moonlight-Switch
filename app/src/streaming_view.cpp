@@ -642,65 +642,31 @@ void StreamingView::handleMouseInputCombo() {
     if (!this->focused)
         return;
 
-#ifdef __SWITCH__
-    auto* switchInput = static_cast<brls::SwitchInputManager*>(
-        Application::getPlatform()->getInputManager());
-    const int count = std::min<int>(
-        switchInput->getControllersConnectedCount(), GAMEPADS_MAX);
-    const auto now = std::chrono::steady_clock::now();
-    for (int controller = 0; controller < GAMEPADS_MAX; ++controller) {
-        const auto side = controller < count
-            ? switchInput->getLogicalJoyConSide(controller)
-            : brls::HalfJoyConSide::NONE;
-        const auto options = side == brls::HalfJoyConSide::LEFT
-            ? Settings::instance().mouse_input_options_left()
-            : side == brls::HalfJoyConSide::RIGHT
-                ? Settings::instance().mouse_input_options_right()
-                : Settings::instance().mouse_input_options();
-
-        bool pressed = false;
-        if (controller < count && !options.buttons.empty() &&
-            (side != brls::HalfJoyConSide::NONE || controller == 0)) {
-            brls::ControllerState state{};
-            switchInput->updateControllerState(&state, controller);
-            pressed = mouseModeComboMatches(options.buttons, state.buttons);
-        }
-        if (!pressed) {
-            mouseComboHeld[controller] = false;
-            mouseComboUsed[controller] = false;
-        } else if (!mouseComboHeld[controller]) {
-            mouseComboHeld[controller] = true;
-            mouseComboStarted[controller] = now;
-        } else if (!mouseComboUsed[controller] &&
-                   now - mouseComboStarted[controller] >=
-                       std::chrono::seconds(options.holdTime)) {
-            mouseComboUsed[controller] = true;
-            // The physical source must be fixed BEFORE creating the overlay.
-            // Gyro mouse is immediately active with the Joy-Con that pressed
-            // its own fully configurable shortcut, not the first one moving.
-            auto* overlay = new StreamingInputOverlay(this, true, controller);
-            Application::pushActivity(new Activity(overlay));
-            return;
-        }
-    }
-#else
     const auto options = Settings::instance().mouse_input_options();
-    if (options.buttons.empty()) return;
-    brls::ControllerState state{};
-    Application::getPlatform()->getInputManager()->updateUnifiedControllerState(&state);
-    const bool pressed = mouseModeComboMatches(options.buttons, state.buttons);
+    if (options.buttons.empty())
+        return;
+
+    // Restore the original unified shortcut for opening the mouse overlay.
+    // The gyro source itself is always the first paired right Joy-Con.
+    brls::ControllerState controller{};
+    Application::getPlatform()->getInputManager()
+        ->updateUnifiedControllerState(&controller);
+
+    const bool pressed = mouseModeComboMatches(options.buttons, controller.buttons);
     const auto now = std::chrono::steady_clock::now();
     if (!pressed) {
-        mouseComboHeld[0] = mouseComboUsed[0] = false;
+        mouseComboHeld[0] = false;
+        mouseComboUsed[0] = false;
     } else if (!mouseComboHeld[0]) {
         mouseComboHeld[0] = true;
         mouseComboStarted[0] = now;
     } else if (!mouseComboUsed[0] &&
-               now - mouseComboStarted[0] >= std::chrono::seconds(options.holdTime)) {
+               now - mouseComboStarted[0] >=
+                   std::chrono::seconds(options.holdTime)) {
         mouseComboUsed[0] = true;
-        Application::pushActivity(new Activity(new StreamingInputOverlay(this, true)));
+        auto* overlay = new StreamingInputOverlay(this, true);
+        Application::pushActivity(new Activity(overlay));
     }
-#endif
 }
 
 void StreamingView::onLayout() {
