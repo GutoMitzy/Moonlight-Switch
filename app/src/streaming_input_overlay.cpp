@@ -7,6 +7,9 @@
 
 #include "streaming_input_overlay.hpp"
 #include "InputManager.hpp"
+#ifdef __SWITCH__
+#include <borealis/platforms/switch/switch_input.hpp>
+#endif
 #include <Limelight.h>
 #include <cmath>
 
