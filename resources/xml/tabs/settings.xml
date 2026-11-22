@@ -99,9 +99,6 @@
             <brls:DetailCell
                 id="swap_game"/>
 
-            <brls:DetailCell
-                id="halfcon_mapping"/>
-
             <brls:Header
                     title="@i18n/settings/deadzone/title"
                     paddingTop="60"/>
@@ -131,19 +128,6 @@
 
             <brls:SelectorCell
                 id="joycon_input_mode"/>
-
-            <brls:DetailCell
-                id="joycon_players"/>
-
-            <brls:Header
-                title="Mouse por giroscópio — atalhos por Joy-Con"
-                paddingTop="40"/>
-
-            <brls:SelectorCell
-                id="gyro_mouse_shortcut_left"/>
-
-            <brls:SelectorCell
-                id="gyro_mouse_shortcut_right"/>
 
             <brls:BooleanCell
                 id="swap_stick_to_dpad"/>
@@ -179,7 +163,10 @@
                 id="mouse_input_time"/>
             
             <brls:DetailCell
-                id="mouse_input_buttons"/>
+                id="mouse_input_buttons_left"/>
+
+            <brls:DetailCell
+                id="mouse_input_buttons_right"/>
 
             <brls:Header
                 title="@i18n/settings/keyboard"
