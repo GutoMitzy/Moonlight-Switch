@@ -58,8 +58,11 @@ public:
 
         // Allow fine aiming on the first sample. Only attenuate very low
         // angular speeds, where stationary IMU noise dominates.
-        constexpr float noiseFloor = 0.012f;
-        constexpr float fullResponse = 0.036f;
+        // Motion HID already supplies corrected angular velocity plus a
+        // hardware rest flag. Preserve very small deliberate aiming changes
+        // while still rejecting the lowest stationary noise.
+        constexpr float noiseFloor = 0.0065f;
+        constexpr float fullResponse = 0.020f;
         const float weight = std::clamp(
             (angularSpeed - noiseFloor) / (fullResponse - noiseFloor),
             0.0f, 1.0f);
