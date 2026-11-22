@@ -135,6 +135,10 @@ MoonlightInputManager::MoonlightInputManager() {
                 }
             }
             if (!inputEnabled) return;
+            // Recovered historical HID samples are still integrated by the
+            // local pointer, but enqueueing all of them in a burst adds input
+            // lag in Sunshine/emulators after a docked render-frame stall.
+            if (!event.latestInBatch) return;
             const float gyroScale = Settings::instance().gyro_sensitivity();
             const bool gyroEvent = event.type == brls::SensorEventType::GYRO;
             const uint8_t type = gyroEvent ? LI_MOTION_TYPE_GYRO : LI_MOTION_TYPE_ACCEL;
