@@ -4,13 +4,15 @@
 
 int main()
 {
-    assert(stableVirtualGamepadCount(2, -1, true, true) == 2);
-    assert(stableVirtualGamepadCount(2, 2, false, true) == 2);
-    assert(stableVirtualGamepadCount(1, 2, false, true) == 2);
-    assert(stableVirtualGamepadCount(0, 2, false, true) == 2);
-    assert(stableVirtualGamepadCount(4, 2, false, true) == 4);
+    // Fixed host seats prevent first-pair input profiles from migrating when
+    // a second pair is connected or temporarily disconnected.
+    assert(stableVirtualGamepadCount(2, -1, true, true) == 4);
     assert(stableVirtualGamepadCount(2, 4, false, true) == 4);
-    assert(stableVirtualGamepadCount(0, 4, true, true) == 0);
+    assert(stableVirtualGamepadCount(4, 4, false, true) == 4);
+    assert(stableVirtualGamepadCount(1, 4, false, true) == 4);
+    assert(stableVirtualGamepadCount(0, 4, false, true) == 4);
+    assert(stableVirtualGamepadCount(4, 2, false, true) == 4);
+    assert(stableVirtualGamepadCount(0, -1, true, true) == 0);
     assert(stableVirtualGamepadCount(2, 4, false, false) == 2);
     assert(stableVirtualGamepadCount(0, -1, false, true) == 0);
 }
