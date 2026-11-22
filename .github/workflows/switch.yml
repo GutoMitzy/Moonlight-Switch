@@ -5,10 +5,6 @@ name: Switch
 on:
   workflow_dispatch:
   workflow_call:
-  # Explicit one-shot fixed-right-Joy-Con validation (PR opened only).
-  pull_request:
-    types: [opened]
-    branches: [joycon-fidelity-v20]
 
 permissions:
   contents: read
