@@ -698,32 +698,17 @@ SettingsTab::SettingsTab() {
             Settings::instance().set_mouse_input_options(options);
         });
 
-    mouseInputButtonsLeft->setText("Botões para Joy-Con esquerdo");
-    setupButtonsSelectorCell(mouseInputButtonsLeft,
-        Settings::instance().mouse_input_options_left().buttons);
-    mouseInputButtonsLeft->registerClickAction([this](View*) {
+    mouseInputButtons->setText("settings/overlay_buttons"_i18n);
+    setupButtonsSelectorCell(
+        mouseInputButtons, Settings::instance().mouse_input_options().buttons);
+    mouseInputButtons->registerClickAction([this](View*) {
         auto* dialog = ButtonSelectingDialog::create(
             "settings/mouse_input_setup_message"_i18n, [this](auto buttons) {
-                auto options = Settings::instance().mouse_input_options_left();
+                auto options = Settings::instance().mouse_input_options();
                 options.buttons = buttons;
-                Settings::instance().set_mouse_input_options_left(options);
+                Settings::instance().set_mouse_input_options(options);
                 Settings::instance().save();
-                setupButtonsSelectorCell(mouseInputButtonsLeft, buttons);
-            });
-        dialog->open();
-        return true;
-    });
-    mouseInputButtonsRight->setText("Botões para Joy-Con direito");
-    setupButtonsSelectorCell(mouseInputButtonsRight,
-        Settings::instance().mouse_input_options_right().buttons);
-    mouseInputButtonsRight->registerClickAction([this](View*) {
-        auto* dialog = ButtonSelectingDialog::create(
-            "settings/mouse_input_setup_message"_i18n, [this](auto buttons) {
-                auto options = Settings::instance().mouse_input_options_right();
-                options.buttons = buttons;
-                Settings::instance().set_mouse_input_options_right(options);
-                Settings::instance().save();
-                setupButtonsSelectorCell(mouseInputButtonsRight, buttons);
+                setupButtonsSelectorCell(mouseInputButtons, buttons);
             });
         dialog->open();
         return true;
