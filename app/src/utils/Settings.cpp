@@ -523,20 +523,30 @@ void Settings::load() {
                 }
             }
             
-            if (json_t* buttons = json_object_get(settings, "mouse_input_buttons")) {
-                m_mouse_input_options.buttons.clear();
-                size_t size = json_array_size(buttons);
-                for (size_t i = 0; i < size; i++) {
-                    if (json_t* j_button = json_array_get(buttons, i)) {
-                        brls::ControllerButton button;
-                        if (json_typeof(j_button) == JSON_INTEGER) {
-                            button = (brls::ControllerButton)json_integer_value(j_button);
-                            m_mouse_input_options.buttons.push_back(button);
-                        }
+            // Existing mouse shortcut is migrated to both sides once; new
+            // independent choices override it without changing other profiles.
+            auto readMouseButtons = [](json_t* array,
+                                       std::vector<brls::ControllerButton>& target) {
+                if (!json_is_array(array)) return;
+                target.clear();
+                for (size_t i = 0; i < json_array_size(array); ++i) {
+                    json_t* entry = json_array_get(array, i);
+                    if (json_is_integer(entry)) {
+                        const int button = static_cast<int>(json_integer_value(entry));
+                        if (button >= 0 && button < brls::_BUTTON_MAX)
+                            target.push_back(static_cast<brls::ControllerButton>(button));
                     }
                 }
-            }
-            
+            };
+            readMouseButtons(json_object_get(settings, "mouse_input_buttons"),
+                             m_mouse_input_options.buttons);
+            m_mouse_input_options_left.buttons = m_mouse_input_options.buttons;
+            m_mouse_input_options_right.buttons = m_mouse_input_options.buttons;
+            readMouseButtons(json_object_get(settings, "mouse_input_buttons_left"),
+                             m_mouse_input_options_left.buttons);
+            readMouseButtons(json_object_get(settings, "mouse_input_buttons_right"),
+                             m_mouse_input_options_right.buttons);
+
             if (json_t* buttons = json_object_get(settings, "guide_key_buttons")) {
                 m_guide_key_options.buttons.clear();
                 size_t size = json_array_size(buttons);
@@ -737,12 +747,18 @@ void Settings::save()
                 json_object_set_new(settings, "overlay_buttons", overlayButtons);
             }
 
-            if (json_t* mouseInputButtons = json_array()) {
-                for (auto button: m_mouse_input_options.buttons) {
-                    json_array_append_new(mouseInputButtons, json_integer(button));
-                }
-                json_object_set_new(settings, "mouse_input_buttons", mouseInputButtons);
-            }
+            auto saveMouseButtons = [settings](const char* key,
+                    const std::vector<brls::ControllerButton>& buttons) {
+                json_t* array = json_array();
+                if (!array) return;
+                for (const auto button : buttons)
+                    json_array_append_new(array, json_integer(button));
+                json_object_set_new(settings, key, array);
+            };
+            saveMouseButtons("mouse_input_buttons_left",
+                             m_mouse_input_options_left.buttons);
+            saveMouseButtons("mouse_input_buttons_right",
+                             m_mouse_input_options_right.buttons);
             
             if (json_t* guideKeyButtons = json_array()) { 
                 for (auto button: m_guide_key_options.buttons) {
