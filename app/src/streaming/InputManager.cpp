@@ -616,7 +616,13 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
             ? 0
             : std::max(announcedControllerCount, 0);
         bool announced = true;
-        for (int i = 0; i < controllersCount; i++) {
+        // Re-announcing existing controller IDs can force Sunshine/SDL
+        // to recreate a Pro Controller and discard the emulator's saved
+        // button mapping. Announce only newly appended virtual seats.
+        // Existing pads receive the updated active mask with their next
+        // LiSendMultiControllerEvent below.
+        const int firstNewController = newStream ? 0 : previousControllerCount;
+        for (int i = firstNewController; i < controllersCount; i++) {
             announced &= LiSendControllerArrivalEvent(
                              i, mappedControllersCount, LI_CTYPE_PS, 0,
                              LI_CCAP_RUMBLE | LI_CCAP_ACCEL | LI_CCAP_GYRO) == 0;
