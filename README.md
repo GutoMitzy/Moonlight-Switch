@@ -26,6 +26,24 @@ Este repositório é um fork do [Moonlight-Switch original](https://github.com/X
 
 A estabilidade dessas alterações depende do firmware, da comunicação dos Joy-Cons, da configuração do Sunshine e do programa receptor. Não há garantia de precisão de 90% em hardware sem medições específicas.
 
+## Compatibilidade com Pro Controller (v20 em desenvolvimento)
+
+O Pro Controller usa o caminho **FullKey nativo** do Moonlight-Switch, mantendo
+botões, analógicos, rumble e sensores sem passar pelo remapeamento horizontal
+dos Joy-Cons. Quando o Pro já está conectado antes de iniciar a sessão, o
+Moonlight anuncia somente o número real de controles completos.
+
+Para jogar **exclusivamente com Pro Controller**, inclusive ao conectar
+depois de abrir o streaming, selecione nas configurações de controle
+**Pro Controller (compatibilidade original)** antes de iniciar a sessão.
+Esse modo não cria quatro controles Joy-Con vazios.
+
+Também há suporte experimental a sessões mistas com Pro e Joy-Cons,
+preservando a ordem de dispositivos já conectados e evitando reanunciá-los
+quando outros controles entram. Consulte a
+[matriz de compatibilidade e limitações da v20](docs/pro-controller-compatibility-v20.md).
+**O modo misto e a v20 ainda exigem testes com hardware real.**
+
 ## Instalação no Nintendo Switch 1
 
 1. Acesse [Actions — build Switch deste fork](https://github.com/GutoMitzy/Moonlight-Switch/actions/workflows/switch.yml) e escolha uma execução concluída **com sucesso** da branch desejada.
