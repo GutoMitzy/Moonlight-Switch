@@ -407,6 +407,12 @@ void Settings::load() {
                 m_joycon_individual_mode = json_typeof(joycon_individual_mode) == JSON_TRUE;
             if (json_t* pro_native = json_object_get(settings, "pro_controller_native_mode"))
                 m_pro_controller_native_mode = json_typeof(pro_native) == JSON_TRUE;
+            if (json_t* leftShortcut = json_object_get(settings, "gyro_mouse_shortcut_left"))
+                if (json_is_integer(leftShortcut))
+                    set_gyro_mouse_shortcut_left(static_cast<int>(json_integer_value(leftShortcut)));
+            if (json_t* rightShortcut = json_object_get(settings, "gyro_mouse_shortcut_right"))
+                if (json_is_integer(rightShortcut))
+                    set_gyro_mouse_shortcut_right(static_cast<int>(json_integer_value(rightShortcut)));
 #endif
 
             if (json_t* touchscreen_mouse_mode = json_object_get(settings, "touchscreen_mouse_mode")) {
@@ -703,6 +709,8 @@ void Settings::save()
             json_object_set_new(settings, "joycon_paired_mode", m_joycon_paired_mode ? json_true() : json_false());
             json_object_set_new(settings, "joycon_individual_mode", m_joycon_individual_mode ? json_true() : json_false());
             json_object_set_new(settings, "pro_controller_native_mode", m_pro_controller_native_mode ? json_true() : json_false());
+            json_object_set_new(settings, "gyro_mouse_shortcut_left", json_integer(m_gyro_mouse_shortcut_left));
+            json_object_set_new(settings, "gyro_mouse_shortcut_right", json_integer(m_gyro_mouse_shortcut_right));
 #endif
             json_object_set_new(settings, "touchscreen_mouse_mode", m_touchscreen_mouse_mode ? json_true() : json_false());
             json_object_set_new(settings, "swap_mouse_keys", m_swap_mouse_keys ? json_true() : json_false());
