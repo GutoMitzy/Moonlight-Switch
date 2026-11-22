@@ -5,6 +5,10 @@ name: Switch
 on:
   workflow_dispatch:
   workflow_call:
+  # One-shot explicit gyro mouse validation. No push/synchronize triggers.
+  pull_request:
+    types: [opened]
+    branches: [joycon-fidelity-v20]
 
 permissions:
   contents: read
