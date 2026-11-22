@@ -14,7 +14,6 @@
 #include <chrono>
 #include <optional>
 #include "GyroAimPointer.hpp"
-#include "GyroMouseSourceSelection.hpp"
 #include "GyroCalibrationHold.hpp"
 #include <array>
 
@@ -65,7 +64,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     void updateTouchScreenPanDelta(brls::PanGestureStatus panStatus);
     void reloadButtonMappingLayout();
     void setInputEnabled(bool enabled) { inputEnabled = enabled; }
-    void setGyroMouseActive(bool active, int sourceController = -1);
+    void setGyroMouseActive(bool active);
     std::optional<brls::Point> consumeGyroMousePosition();
     static void leftMouseClick();
     static void rightMouseClick();
@@ -98,9 +97,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     bool inputEnabled = true;
     bool gyroMouseActive = false;
     int gyroMouseController = -1;
-    GyroMouseSourceSelection gyroMouseSource;
     std::chrono::steady_clock::time_point gyroMouseLastSample = {};
-    std::chrono::steady_clock::time_point gyroMouseLastControllerCheck = {};
     std::optional<brls::Point> gyroMousePosition;
     GyroAimPointer gyroAimPointer;
     std::array<GyroCalibrationHold, GAMEPADS_MAX> gyroCalibrationHolds;
@@ -116,7 +113,6 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
 
     GamepadState getControllerState(int controllerNum, bool specialKey);
     void handleControllers(bool specialKey);
-    void handleGyroMouseShortcuts(int controllersCount);
 
     static short controllersToMap();
 };
