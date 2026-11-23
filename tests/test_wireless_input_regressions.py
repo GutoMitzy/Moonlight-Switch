@@ -116,14 +116,15 @@ int main() {
             )
             subprocess.run([str(binary)], check=True)
 
-    def test_four_stable_host_seats(self):
-        source = (ROOT / "app/include/StableVirtualGamepadCount.hpp").read_text()
-        # v20 reserves four detached Joy-Con seats from stream startup,
-        # while preserving the native FullKey/Pro Controller count.
-        self.assertIn("if (!separateJoyCons || handheld)", source)
-        self.assertIn("if (fullControllerCount > 0 && detected == fullControllerCount)", source)
-        self.assertIn("return std::max(4, detected);", source)
-        self.assertIn("return std::max(detected, previous);", source)
+    def test_launch_uses_actual_switch_topology(self):
+        source = (ROOT / "app/src/streaming/GameStreamClient.cpp").read_text()
+        launch = source.split("void GameStreamClient::start(", 1)[1]
+        snapshot, worker = launch.split("with_cached_server_data<STREAM_CONFIGURATION>", 1)
+        self.assertLess(snapshot.index("resetStreamingControllerOrder()"),
+                        snapshot.index("getControllersConnectedCount()"))
+        self.assertIn("gamepadMaskForCount(controllerCount)", snapshot)
+        self.assertNotIn("getControllersConnectedCount()", worker)
+        self.assertIn("Settings::instance().play_audio(), gamepadMask", worker)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 #include "GameStreamClient.hpp"
+#include "GamepadMask.hpp"
 #include "Settings.hpp"
 #include "WakeOnLanManager.hpp"
 #include <borealis.hpp>
@@ -31,6 +32,7 @@
 
 #if defined(__SWITCH__)
 #include <switch.h>
+#include <borealis/platforms/switch/switch_input.hpp>
 
 // TODO: Remove when presented in LibNX
 struct ipv6_mreq {
@@ -737,15 +739,22 @@ void GameStreamClient::start(const std::string& address,
                              ServerCallback<STREAM_CONFIGURATION>& callback) {
     m_config = config;
 
+    // HID topology and saved Joy-Con seats belong to the UI thread.
+    auto* input = brls::Application::getPlatform()->getInputManager();
+#ifdef __SWITCH__
+    static_cast<brls::SwitchInputManager*>(input)->resetStreamingControllerOrder();
+#endif
+    const int controllerCount = input->getControllersConnectedCount();
+#ifdef __SWITCH__
+    const int gamepadMask = gamepadMaskForCount(controllerCount);
+#else
+    const int gamepadMask = gamepadMaskForCount(std::max(controllerCount, 1));
+#endif
+
     with_cached_server_data<STREAM_CONFIGURATION>(
         address, "Firstly call connect() & pair()...", callback,
-        [this, app_id](const std::string& cachedAddress,
+        [this, app_id, controllerCount, gamepadMask](const std::string& cachedAddress,
                        ServerCallback<STREAM_CONFIGURATION>& callback) {
-            int controllerCount = brls::Application::getPlatform()
-                ->getInputManager()->getControllersConnectedCount();
-            controllerCount = std::clamp(controllerCount, 0, 16);
-            const int gamepadMask = controllerCount > 0
-                ? static_cast<int>((1U << controllerCount) - 1U) : 1;
             brls::Logger::info("GameStream: launching with {} controllers (mask=0x{:x})",
                 controllerCount, gamepadMask);
             int status = gs_start_app(&m_server_data[cachedAddress], &m_config,

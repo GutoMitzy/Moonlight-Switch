@@ -21,28 +21,31 @@ Este repositório é um fork do [Moonlight-Switch original](https://github.com/X
 - **Giroscópio no mouse:** ponteiro baseado em integração angular, suavização adaptativa, resposta mais direta a movimentos curtos e retorno imediato ao inverter junto à borda na área de apontamento. O ponteiro usa o Joy-Con direito do primeiro par no modo separado.
 - **Motion para jogos:** encaminhamento de giroscópio e acelerômetro ao host por eventos de controle, permitindo o uso com controles virtuais que exponham motion.
 - **Calibração de sensores:** correção de viés angular independente por sensor, incluindo calibração automática com repouso confirmado, aceleração próxima de 1 g e amostras consecutivas.
-- **Atalho L3 + R3:** mantenha pressionado por **2 segundos** para solicitar calibração local do jogador e recentralizar o mouse por gyro associado. Mantenha os controles imóveis para a coleta de amostras de repouso. **O atalho não transmite um comando de recentralização do referencial ao emulador.**
+- **Atalho L3 + R3 nos Joy-Cons:** mantenha pressionado por **2 segundos** para solicitar calibração local do jogador e recentralizar o mouse por gyro associado. Mantenha os controles imóveis para a coleta de amostras de repouso. **O atalho não transmite um comando de recentralização do referencial ao emulador.**
 - **Robustez no dock (v18):** reprodução de até oito amostras HID por passagem, integração do mouse pelo intervalo do sensor desde a primeira amostra válida. Para jogos, o Moonlight envia a amostra mais recente de cada lote ao host para evitar uma fila de movimento antigo.
 
 A estabilidade dessas alterações depende do firmware, da comunicação dos Joy-Cons, da configuração do Sunshine e do programa receptor. Não há garantia de precisão de 90% em hardware sem medições específicas.
 
-## Compatibilidade com Pro Controller (v20 em desenvolvimento)
+## Pro Controller, Joy-Cons e portas virtuais
 
-O Pro Controller usa o caminho **FullKey nativo** do Moonlight-Switch, mantendo
-botões, analógicos, rumble e sensores sem passar pelo remapeamento horizontal
-dos Joy-Cons. Quando o Pro já está conectado antes de iniciar a sessão, o
-Moonlight anuncia somente o número real de controles completos.
+Conecte o **Pro Controller ao Switch** e inicie a transmissão normalmente. Ele
+usa o caminho FullKey do Borealis em qualquer modo de Joy-Con. Se estiver
+conectado ao iniciar a transmissão sem Joy-Cons destacados, lidera a sessão
+também no modo portátil. O Moonlight pede um controle Xbox virtual para o Pro
+quando o Sunshine usa seleção automática, para jogos de PC que esperam XInput.
+A seleção manual do Sunshine continua tendo prioridade.
 
-Para jogar **exclusivamente com Pro Controller**, inclusive ao conectar
-depois de abrir o streaming, selecione nas configurações de controle
-**Pro Controller (compatibilidade original)** antes de iniciar a sessão.
-Esse modo não cria quatro controles Joy-Con vazios.
+Uma transmissão iniciada sem controles fica com zero gamepads virtuais até
+reconhecer um controle. O Pro sozinho no dock ocupa uma porta. As quatro portas
+estáveis dos Joy-Cons separados são reservadas depois que o primeiro Joy-Con
+destacado é detectado. Elas permanecem disponíveis até o fim da sessão para
+preservar os perfis no emulador. Joy-Cons continuam pedindo emulação DualShock
+com sensores quando o Sunshine está em modo automático.
 
-Também há suporte experimental a sessões mistas com Pro e Joy-Cons,
-preservando a ordem de dispositivos já conectados e evitando reanunciá-los
-quando outros controles entram. Consulte a
-[matriz de compatibilidade e limitações da v20](docs/pro-controller-compatibility-v20.md).
-**O modo misto e a v20 ainda exigem testes com hardware real.**
+A opção **Pro Controller (compatibilidade original)** continua disponível para
+usar o modo nativo do Switch sem aplicar alterações de atribuição aos Joy-Cons.
+Consulte a [matriz de compatibilidade](docs/pro-controller-compatibility-v20.md)
+para testar conexão durante a transmissão, reconexão e sessões mistas.
 
 ## Instalação no Nintendo Switch 1
 

@@ -106,7 +106,6 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
 
     std::atomic<bool> resetControllers = true;
     int announcedControllerCount = -1;
-    bool fullControllerSession = false; // preserve native FullKey behavior on disconnect
 
     brls::ControllerState mapController(brls::ControllerState controller);
     static short glfwKeyToVKKey(brls::BrlsKeyboardScancode key);
@@ -116,5 +115,4 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     GamepadState getControllerState(int controllerNum, bool specialKey);
     void handleControllers(bool specialKey);
 
-    static short controllersToMap();
 };

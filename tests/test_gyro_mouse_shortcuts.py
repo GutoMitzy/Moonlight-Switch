@@ -27,7 +27,7 @@ class FixedRightJoyConGyroMouseTests(unittest.TestCase):
 
     def test_mouse_gyro_is_restricted_to_first_right_half(self):
         input_source = (ROOT / "app/src/streaming/InputManager.cpp").read_text()
-        self.assertIn('constexpr int preferredRight = 1;', input_source)
+        self.assertIn('platformInput->getFirstJoyConPairRightController()', input_source)
         self.assertIn('getLogicalJoyConSide(preferredRight)', input_source)
         self.assertIn('brls::HalfJoyConSide::RIGHT', input_source)
         self.assertIn('gyroMouseController = preferredRight;', input_source)

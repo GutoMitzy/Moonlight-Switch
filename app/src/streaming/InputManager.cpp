@@ -6,7 +6,7 @@
 #endif
 
 #include "InputManager.hpp"
-#include "StableVirtualGamepadCount.hpp"
+#include "GamepadMask.hpp"
 #include "MotionPacketValidation.hpp"
 #include "Limelight.h"
 #include "Settings.hpp"
@@ -175,10 +175,10 @@ void MoonlightInputManager::setGyroMouseActive(bool active) {
     if (active) {
         auto* platformInput = static_cast<brls::SwitchInputManager*>(
             brls::Application::getPlatform()->getInputManager());
-        // Use only P1's right half (logical controller 2 / index 1) in
-        // separate Joy-Con mode. Never select a different Joy-Con as fallback.
-        constexpr int preferredRight = 1;
-        if (platformInput->getLogicalJoyConSide(preferredRight) ==
+        // Use the same right Joy-Con seat when a FullKey pad precedes it.
+        const int preferredRight = Settings::instance().joycon_individual_mode()
+            ? 1 : platformInput->getFirstJoyConPairRightController();
+        if (preferredRight >= 0 && platformInput->getLogicalJoyConSide(preferredRight) ==
             brls::HalfJoyConSide::RIGHT)
             gyroMouseController = preferredRight;
     }
@@ -416,28 +416,10 @@ void MoonlightInputManager::dropInput() {
     bool res = true;
     // Drop gamepad state
     GamepadState gamepadState;
-    auto controllersCount = brls::Application::getPlatform()
-                            ->getInputManager()
-                            ->getControllersConnectedCount();
-
-    if (controllersCount > GAMEPADS_MAX) {
-        brls::Logger::warning("Clamping controller count from {} to {} while dropping input", controllersCount, GAMEPADS_MAX);
-        controllersCount = GAMEPADS_MAX;
-    }
-
-#ifdef __SWITCH__
-    auto* topologyInput = static_cast<brls::SwitchInputManager*>(
-        brls::Application::getPlatform()->getInputManager());
-    controllersCount = static_cast<short>(stableVirtualGamepadCount(
-        controllersCount, announcedControllerCount, false,
-        !Settings::instance().joycon_paired_mode() &&
-            !Settings::instance().pro_controller_native_mode() &&
-            !fullControllerSession,
-        topologyInput->isHandheldInputActive(),
-        topologyInput->getConnectedFullControllerCount()));
-#endif
-    const short activeMask = controllersCount > 0
-        ? static_cast<short>((1U << controllersCount) - 1U) : 0;
+    // Only neutralize slots already announced in this stream. A controller
+    // connected while the view is unfocused must go through normal arrival.
+    const int controllersCount = resetControllers.load() ? 0 : announcedControllerCount;
+    const auto activeMask = gamepadMaskForCount(controllersCount);
     for (short i = 0; i < controllersCount; i++) {
         // Focus can return while the same button is still held. Resend the
         // physical state after sending neutral, even if it matches the cache.
@@ -595,42 +577,14 @@ GamepadState MoonlightInputManager::getControllerState(int controllerNum,
 void MoonlightInputManager::handleControllers(bool specialKey) {
     const bool newStream = resetControllers.exchange(false);
     if (newStream)
-    {
         announcedControllerCount = -1;
-        fullControllerSession = false;
+
+    auto* input = brls::Application::getPlatform()->getInputManager();
+    const int controllersCount = std::clamp<int>(input->getControllersConnectedCount(), 0, GAMEPADS_MAX);
+    const auto mappedControllersCount = gamepadMaskForCount(controllersCount);
 #ifdef __SWITCH__
-        static_cast<brls::SwitchInputManager*>(
-            brls::Application::getPlatform()->getInputManager())
-            ->resetStreamingControllerOrder();
+    auto* switchInput = static_cast<brls::SwitchInputManager*>(input);
 #endif
-    }
-
-    auto controllersCount = brls::Application::getPlatform()
-                            ->getInputManager()
-                            ->getControllersConnectedCount();
-
-    if (controllersCount > GAMEPADS_MAX) {
-        brls::Logger::warning("Clamping controller count from {} to {} while handling input", controllersCount, GAMEPADS_MAX);
-        controllersCount = GAMEPADS_MAX;
-    }
-
-#ifdef __SWITCH__
-    auto* topologyInput = static_cast<brls::SwitchInputManager*>(
-        brls::Application::getPlatform()->getInputManager());
-    const bool handheld = topologyInput->isHandheldInputActive();
-    const int fullControllers = topologyInput->getConnectedFullControllerCount();
-    if (newStream)
-        fullControllerSession = !handheld && fullControllers > 0 &&
-            controllersCount == fullControllers;
-    controllersCount = static_cast<short>(stableVirtualGamepadCount(
-        controllersCount, announcedControllerCount, newStream,
-        !Settings::instance().joycon_paired_mode() &&
-            !Settings::instance().pro_controller_native_mode() &&
-            !fullControllerSession,
-        handheld, fullControllers));
-#endif
-    const short mappedControllersCount = controllersCount > 0
-        ? static_cast<short>((1U << controllersCount) - 1U) : 0;
     const bool controllerSetChanged = announcedControllerCount != controllersCount;
 
     // The host needs type/capabilities again for every new stream, even when
@@ -647,13 +601,19 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
         // LiSendMultiControllerEvent below.
         const int firstNewController = newStream ? 0 : previousControllerCount;
         for (int i = firstNewController; i < controllersCount; i++) {
+            auto type = LI_CTYPE_PS;
+#ifdef __SWITCH__
+            // Prefer XInput for full-size pads when Sunshine is in Auto.
+            // Explicit host emulation settings can still override the type.
+            if (switchInput->isFullKeyController(i))
+                type = LI_CTYPE_XBOX;
+#endif
             announced &= LiSendControllerArrivalEvent(
-                             i, mappedControllersCount, LI_CTYPE_PS, 0,
+                             i, mappedControllersCount, type, 0,
                              LI_CCAP_RUMBLE | LI_CCAP_ACCEL | LI_CCAP_GYRO) == 0;
         }
 
-        // A zero activeGamepadMask is the protocol signal that removes stale
-        // virtual gamepads after a physical Joy-Con is disconnected.
+        // Clearing a slot's bit in its final state removes that virtual pad.
         GamepadState neutralState{};
         for (int i = controllersCount; i < previousControllerCount; i++) {
             const int result = LiSendMultiControllerEvent(
@@ -681,8 +641,6 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
 #ifdef __SWITCH__
     const bool separateJoyCons = !Settings::instance().joycon_paired_mode() &&
                                  !Settings::instance().pro_controller_native_mode();
-    auto* switchInput = static_cast<brls::SwitchInputManager*>(
-        brls::Application::getPlatform()->getInputManager());
     const auto now = std::chrono::steady_clock::now();
     if (newStream)
         for (auto& hold : gyroCalibrationHolds)
@@ -691,16 +649,16 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
     // L3+R3 requires two halves in Pairs mode. In Individual mode each
     // seat is a single Joy-Con; do not consume its only stick click.
     const bool individualJoyCons = Settings::instance().joycon_individual_mode();
-    const int groupSize = individualJoyCons ? 1 : (separateJoyCons ? 2 : 1);
-    for (int first = 0; first < controllersCount; first += groupSize) {
+    for (int first = 0; first < controllersCount; ++first) {
         const int second = separateJoyCons ? first + 1 : first;
-        const bool fullPair = second < controllersCount;
-        const bool l3 = (states[first].buttonFlags & LS_CLK_FLAG) != 0;
-        const bool r3 = fullPair &&
-            (states[second].buttonFlags & RS_CLK_FLAG) != 0;
-        const bool combination = !individualJoyCons && l3 && r3;
-        const int group = first / groupSize;
-        if (gyroCalibrationHolds[group].update(combination, now)) {
+        const bool combination = !individualJoyCons && second < controllersCount &&
+            (states[first].buttonFlags & LS_CLK_FLAG) &&
+            (states[second].buttonFlags & RS_CLK_FLAG) &&
+            (separateJoyCons
+                ? switchInput->getLogicalJoyConSide(first) == brls::HalfJoyConSide::LEFT &&
+                  switchInput->getLogicalJoyConSide(second) == brls::HalfJoyConSide::RIGHT
+                : !switchInput->isFullKeyController(first));
+        if (gyroCalibrationHolds[first].update(combination, now)) {
             const bool calibratedLeft =
                 switchInput->requestSixAxisCalibrationForController(first);
             const bool calibratedRight = separateJoyCons
@@ -715,11 +673,11 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
                     gyroMousePosition = brls::Point{0.5f, 0.5f};
                 }
                 brls::Logger::info(
-                    "GYRO: L3+R3 calibration requested player={} controllers={}/{}",
-                    group + 1, first, second);
+                    "GYRO: L3+R3 calibration requested controllers={}/{}",
+                    first, second);
             } else {
                 brls::Logger::warning(
-                    "GYRO: calibration unavailable for player={}", group + 1);
+                    "GYRO: calibration unavailable for controllers={}/{}", first, second);
             }
         }
 
@@ -900,19 +858,6 @@ void MoonlightInputManager::handleInput(bool ignoreTouch) {
             }
         }
     }
-}
-
-short MoonlightInputManager::controllersToMap() {
-    // One bit per connected controller, up to GAMEPADS_MAX (the old table
-    // stopped at 0xF and left the 5th controller out of the active mask)
-    int count = brls::Application::getPlatform()
-                    ->getInputManager()
-                    ->getControllersConnectedCount();
-    if (count <= 0)
-        return 0x0;
-    if (count > GAMEPADS_MAX)
-        count = GAMEPADS_MAX;
-    return (short)((1 << count) - 1);
 }
 
 brls::ControllerState
