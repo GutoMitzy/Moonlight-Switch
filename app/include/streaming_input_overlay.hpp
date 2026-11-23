@@ -33,8 +33,6 @@ class StreamingInputOverlay : public brls::Box {
     bool shortcutReleased = false;
     bool shortcutPressed = false;
     std::chrono::steady_clock::time_point shortcutPressedAt = {};
-    float gyroMouseSubpixelX = 0.0f;
-    float gyroMouseSubpixelY = 0.0f;
 
     void toggleKeyboard();
     void refreshKeyboard();

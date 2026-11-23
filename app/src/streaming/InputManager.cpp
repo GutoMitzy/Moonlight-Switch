@@ -101,11 +101,11 @@ MoonlightInputManager::MoonlightInputManager() {
                             120000);
 #endif
                         const auto now = std::chrono::steady_clock::now();
-                        if (gyroMouseLastSample.time_since_epoch().count() != 0) {
-                            const float wallDt = std::chrono::duration<float>(
-                                now - gyroMouseLastSample).count();
+                        if (event.sampleIntervalSeconds > 0.0f ||
+                            gyroMouseLastSample.time_since_epoch().count() != 0) {
                             const float dt = event.sampleIntervalSeconds > 0.0f
-                                ? event.sampleIntervalSeconds : wallDt;
+                                ? event.sampleIntervalSeconds
+                                : std::chrono::duration<float>(now - gyroMouseLastSample).count();
                             const float zoom = 0.6f +
                                 1.2f * Settings::instance().get_mouse_speed_multiplier() /
                                 100.0f;
@@ -187,6 +187,20 @@ void MoonlightInputManager::setGyroMouseActive(bool active) {
     gyroAimPointer.reset();
     gyroMousePosition.reset();
     desktopMouseRemainder = {0, 0};
+}
+
+void MoonlightInputManager::recenterGyroMouse() {
+    if (!gyroMouseActive)
+        return;
+    setGyroMouseActive(true);
+#ifdef __SWITCH__
+    if (gyroMouseController >= 0) {
+        auto* input = static_cast<brls::SwitchInputManager*>(
+            brls::Application::getPlatform()->getInputManager());
+        input->requestSixAxisCalibrationForController(gyroMouseController);
+    }
+#endif
+    gyroMousePosition = brls::Point{0.5f, 0.5f};
 }
 
 std::optional<brls::Point> MoonlightInputManager::consumeGyroMousePosition() {
@@ -425,6 +439,9 @@ void MoonlightInputManager::dropInput() {
     const short activeMask = controllersCount > 0
         ? static_cast<short>((1U << controllersCount) - 1U) : 0;
     for (short i = 0; i < controllersCount; i++) {
+        // Focus can return while the same button is still held. Resend the
+        // physical state after sending neutral, even if it matches the cache.
+        pendingGamepadStates[i] = true;
         res &= LiSendMultiControllerEvent(
                    i, activeMask, gamepadState.buttonFlags,
                    gamepadState.leftTrigger, gamepadState.rightTrigger,
@@ -716,15 +733,17 @@ void MoonlightInputManager::handleControllers(bool specialKey) {
     for (int i = 0; i < controllersCount; i++) {
         GamepadState& gamepadState = states[i];
 
-        if (newStream || controllerSetChanged || !gamepadState.is_equal(lastGamepadStates[i])) {
-            lastGamepadStates[i] = gamepadState;
-
-            if (LiSendMultiControllerEvent(
+        if (controllerSetChanged || pendingGamepadStates[i] ||
+            !gamepadState.is_equal(lastGamepadStates[i])) {
+            pendingGamepadStates[i] = LiSendMultiControllerEvent(
                     i, mappedControllersCount, gamepadState.buttonFlags,
                     gamepadState.leftTrigger, gamepadState.rightTrigger,
                     gamepadState.leftStickX, gamepadState.leftStickY,
-                    gamepadState.rightStickX, gamepadState.rightStickY) != 0)
-                brls::Logger::info("StreamingView: error sending input data");
+                    gamepadState.rightStickX, gamepadState.rightStickY) != 0;
+            if (pendingGamepadStates[i])
+                brls::Logger::debug("StreamingView: retrying input for controller {}", i);
+            else
+                lastGamepadStates[i] = gamepadState;
         }
     }
 }

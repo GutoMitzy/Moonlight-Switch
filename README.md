@@ -18,11 +18,11 @@ Este repositório é um fork do [Moonlight-Switch original](https://github.com/X
 ### Adaptações para Joy-Con
 
 - **Controles separados e pareados:** atribuição lógica dos Joy-Cons esquerdo e direito, com suporte a dois pares (quatro metades) e recuperação de situações específicas de enumeração HID `JoyDual`.
-- **Giroscópio no mouse:** ponteiro baseado em integração angular, suavização adaptativa para movimentos pequenos e bloqueio de deriva em repouso confirmado pelo sensor.
+- **Giroscópio no mouse:** ponteiro baseado em integração angular, suavização adaptativa, resposta mais direta a movimentos curtos e retorno imediato ao inverter junto à borda na área de apontamento. O ponteiro usa o Joy-Con direito do primeiro par no modo separado.
 - **Motion para jogos:** encaminhamento de giroscópio e acelerômetro ao host por eventos de controle, permitindo o uso com controles virtuais que exponham motion.
-- **Calibração de sensores:** correção de viés angular independente por sensor, incluindo calibração automática conservadora durante repouso.
+- **Calibração de sensores:** correção de viés angular independente por sensor, incluindo calibração automática com repouso confirmado, aceleração próxima de 1 g e amostras consecutivas.
 - **Atalho L3 + R3:** mantenha pressionado por **2 segundos** para solicitar calibração local do jogador e recentralizar o mouse por gyro associado. Mantenha os controles imóveis para a coleta de amostras de repouso. **O atalho não transmite um comando de recentralização do referencial ao emulador.**
-- **Robustez no dock (v18):** reprodução de até oito amostras HID por passagem, integração do mouse pelo intervalo do sensor e nova seleção de fonte ao mudar a configuração física dos controles.
+- **Robustez no dock (v18):** reprodução de até oito amostras HID por passagem, integração do mouse pelo intervalo do sensor desde a primeira amostra válida. Para jogos, o Moonlight envia a amostra mais recente de cada lote ao host para evitar uma fila de movimento antigo.
 
 A estabilidade dessas alterações depende do firmware, da comunicação dos Joy-Cons, da configuração do Sunshine e do programa receptor. Não há garantia de precisão de 90% em hardware sem medições específicas.
 
@@ -58,7 +58,11 @@ O recurso depende de um Switch com ambiente de homebrew. Artefatos de Actions s�
 
 No Sunshine, selecione um tipo de controle virtual com suporte a sensores (por exemplo, **DualShock 4**, se disponível na sua instalação). No emulador, associe o jogador à porta virtual correta e configure seu provedor de movimento. O Motion DSU/UDP só funcionará se a ponte entre Sunshine, controle virtual e emulador estiver realmente configurada; o Moonlight não envia automaticamente pacotes DSU diretamente do console para o emulador.
 
-No modo separado, confira a numeração dos dispositivos após conectar ou desconectar Joy-Cons. O comportamento de porta do emulador depende também de seus perfis salvos e da enumeração feita no host.
+### Perfis de Joy-Con no Lichii
+
+O [Lichii build 386](https://github.com/zortos293/Lichii/releases/tag/build-386) associa o perfil SDL ao GUID apresentado pelo host e à porta entre dispositivos com o mesmo GUID. Para manter o perfil, use o mesmo tipo de controle virtual no Sunshine e selecione a mesma porta no Lichii. Em sessões com Joy-Cons separados, o Moonlight mantém assentos virtuais nas reconexões e reenvia estados de botões após uma falha de enfileiramento ou ao retomar o jogo depois de enviar um controle neutro.
+
+Se o remapeamento voltar a ocorrer, compare o GUID e a porta no log do Lichii antes e depois do problema. Se ambos coincidirem, anote o botão físico, o botão recebido, o modo de Joy-Con e o perfil ativo do jogo.
 
 ### Comandos durante o streaming
 
@@ -66,7 +70,7 @@ No modo separado, confira a numeração dos dispositivos após conectar ou desco
 | --- | --- |
 | Overlay do jogo | `-` + `+` por padrão (configurável) |
 | Calibrar gyro do jogador | Segurar `L3` + `R3` por 2 segundos |
-| Recentrar o mouse por gyro | Comando do overlay de mouse, quando disponível |
+| Recentrar e recalibrar o mouse por gyro | No overlay do mouse, aponte para o centro, pressione Recentrar (L3) e mantenha o Joy-Con direito imóvel por um instante |
 | Mouse por gyro | Ativar no overlay de entrada/mouse |
 
 O atalho de calibração exige que o sensor permaneça imóvel para estimar seu viés. Ele **não** substitui a opção de recentralização/calibração de orientação do emulador, se existente.
@@ -99,7 +103,7 @@ O registro acrescenta I/O e mede principalmente o comportamento **no Switch**. N
 O submódulo Borealis contém modificações necessárias ao suporte dos Joy-Cons. Sempre faça o clone recursivo:
 
 ```bash
-git clone --recurse-submodules -b joycon-dock-motion-reliability-v18 https://github.com/GutoMitzy/Moonlight-Switch.git
+git clone --recurse-submodules -b joycon-fidelity-v20 https://github.com/GutoMitzy/Moonlight-Switch.git
 cd Moonlight-Switch
 git submodule update --init --recursive
 ```

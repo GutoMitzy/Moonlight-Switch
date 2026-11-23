@@ -64,7 +64,7 @@ public:
         // Small movements should remain proportional. Bias is already removed
         // in SixAxisQuality; avoid a large second dead zone in the pointer.
         constexpr float noiseFloor = 0.0025f;
-        constexpr float fullResponse = 0.014f;
+        constexpr float fullResponse = 0.010f;
         const float weight = std::clamp(
             (angularSpeed - noiseFloor) / (fullResponse - noiseFloor),
             0.0f, 1.0f);
@@ -99,7 +99,7 @@ public:
                                   fromRate(filteredRate, dt)));
         } else {
             filteredRate = {};
-            stationarySeconds += dt;
+            stationarySeconds = hardwareAtRest ? stationarySeconds + dt : 0.0f;
             if (stationarySeconds > 0.3f &&
                 hasMeasuredGravity && hasReferenceGravity)
             {
@@ -126,7 +126,9 @@ public:
         const float projectedY = 0.5f + aim.y / depth * focal;
         const float rawX = projectedX + displayOffsetX;
         const float rawY = projectedY + displayOffsetY;
-        if (!moving) {
+        if (!moving || aim.z <= 0.20f) {
+            // The projection reverses when pointing behind the screen.
+            // Hold the cursor outside the forward field of view.
             // Anchor the absolute offset to the current orientation when
             // stopped, avoiding incremental residual accumulation when the
             // cursor is pinned at an edge or gravity correction is active.
@@ -137,6 +139,9 @@ public:
         } else {
             displayedX = std::clamp(rawX, 0.0f, 1.0f);
             displayedY = std::clamp(rawY, 0.0f, 1.0f);
+            // Discard overshoot so the first reverse sample leaves the edge.
+            if (displayedX != rawX) displayOffsetX = displayedX - projectedX;
+            if (displayedY != rawY) displayOffsetY = displayedY - projectedY;
             normalizedX = displayedX;
             normalizedY = displayedY;
         }

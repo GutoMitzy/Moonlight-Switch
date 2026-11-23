@@ -255,8 +255,6 @@ void StreamingInputOverlay::populateHintWithDefaultItems() {
                                            ControllerButton::BUTTON_Y,
                                            [this](View*) {
                                                gyroMouseEnabled = !gyroMouseEnabled;
-                                               gyroMouseSubpixelX = 0.0f;
-                                               gyroMouseSubpixelY = 0.0f;
                                                MoonlightInputManager::instance().setGyroMouseActive(gyroMouseEnabled);
                                                if (gyroMouseEnabled && Application::contentWidth > 0
                                                    && Application::contentHeight > 0) {
@@ -281,15 +279,7 @@ void StreamingInputOverlay::populateHintWithDefaultItems() {
                                            [this](View*) {
                                                if (!gyroMouseEnabled)
                                                    return true;
-                                               gyroMouseSubpixelX = 0.0f;
-                                               gyroMouseSubpixelY = 0.0f;
-                                               MoonlightInputManager::instance().setGyroMouseActive(true);
-                                               if (Application::contentWidth > 0 && Application::contentHeight > 0)
-                                                   LiSendMousePositionEvent(
-                                                       Application::contentWidth / 2,
-                                                       Application::contentHeight / 2,
-                                                       Application::contentWidth,
-                                                       Application::contentHeight);
+                                               MoonlightInputManager::instance().recenterGyroMouse();
                                                return true;
                                            }));
 

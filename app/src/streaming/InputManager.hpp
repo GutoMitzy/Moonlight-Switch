@@ -65,6 +65,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
     void reloadButtonMappingLayout();
     void setInputEnabled(bool enabled) { inputEnabled = enabled; }
     void setGyroMouseActive(bool active);
+    void recenterGyroMouse();
     std::optional<brls::Point> consumeGyroMousePosition();
     static void leftMouseClick();
     static void rightMouseClick();
@@ -78,6 +79,7 @@ class MoonlightInputManager : public Singleton<MoonlightInputManager> {
 
     RumbleValues rumbleCache[GAMEPADS_MAX];
     GamepadState lastGamepadStates[GAMEPADS_MAX];
+    std::array<bool, GAMEPADS_MAX> pendingGamepadStates{};
     brls::ControllerButton mappingButtons[brls::_BUTTON_MAX];
     std::optional<brls::PanGestureStatus> panStatus;
     std::map<uint32_t, bool> activeTouchIDs;

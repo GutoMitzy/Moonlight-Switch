@@ -121,6 +121,20 @@ int main() {
     for (int i = 0; i < 200; ++i)
         assert(aim.update(0.0f, 1.0f, 0.0f, 0.01f, 1.0f, x, y));
     assert(x == 0.0f);
+
+    // Reverse at the edge without pausing. The cursor must leave on the
+    // very first reverse sample, even after continuing to turn at the edge.
+    aim.reset();
+    for (int i = 0; i < 90; ++i)
+        assert(aim.update(0.0f, 1.0f, 0.0f, 0.01f, 1.0f, x, y));
+    assert(x == 0.0f);
+    assert(aim.update(0.0f, -0.04f, 0.0f, 0.005f, 1.0f, x, y));
+    assert(x > 0.0f);
+
+    aim.reset();
+    assert(aim.update(0.0f, 0.009f, 0.0f, 0.005f, 1.0f, x, y));
+    assert(0.5f - x > 0.000011f);
+
     aim.reset();
     assert(aim.update(0.0f, 0.0f, 0.0f, 0.01f, 1.0f, x, y));
     assert(x == 0.5f && y == 0.5f);
