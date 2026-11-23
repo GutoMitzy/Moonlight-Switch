@@ -49,13 +49,12 @@ para testar conexão durante a transmissão, reconexão e sessões mistas.
 
 ## Instalação no Nintendo Switch 1
 
-1. Acesse [Actions — build Switch deste fork](https://github.com/GutoMitzy/Moonlight-Switch/actions/workflows/switch.yml) e escolha uma execução concluída **com sucesso** da branch desejada.
-2. Em **Artifacts**, obtenha o `Moonlight-Switch.nro`. Se o arquivo estiver dentro de um ZIP, extraia-o.
-3. Copie o NRO para `sdmc:/switch/Moonlight-Switch/Moonlight-Switch.nro` (crie o diretório se necessário).
-4. Abra o Homebrew Menu preferencialmente pelo **Title Redirection**, para permitir a memória necessária ao streaming, e inicie o Moonlight-Switch.
-5. Instale e configure o [Sunshine](https://github.com/LizardByte/Sunshine) no computador; associe o computador no Moonlight e inicie o aplicativo ou jogo desejado.
+1. Acesse [Releases](https://github.com/GutoMitzy/Moonlight-Switch/releases) e baixe o `Moonlight-Switch.nro` da versão mais recente para Switch 1.
+2. Copie o arquivo para `sdmc:/switch/Moonlight-Switch/Moonlight-Switch.nro`, criando a pasta se necessário.
+3. Abra o Homebrew Menu via **Title Redirection** para disponibilizar a memória necessária ao streaming. Inicie o Moonlight-Switch.
+4. Configure o [Sunshine](https://github.com/LizardByte/Sunshine) no PC, pare o computador no Moonlight e inicie o jogo ou aplicativo desejado.
 
-O recurso depende de um Switch com ambiente de homebrew. Artefatos de Actions são **builds experimentais**, não releases oficiais do Moonlight-Switch original. O projeto pode incluir suporte a Switch 2, mas o workflow desta branch compila especificamente o **Switch 1**.
+A instalação requer um Switch 1 com ambiente de homebrew.
 
 ### Configuração do gyro nos jogos
 
@@ -78,12 +77,6 @@ Se o remapeamento voltar a ocorrer, compare o GUID e a porta no log do Lichii an
 
 O atalho de calibração exige que o sensor permaneça imóvel para estimar seu viés. Ele **não** substitui a opção de recentralização/calibração de orientação do emulador, se existente.
 
-## Portátil vs. docked
-
-O modo docked pode aumentar a carga de apresentação de vídeo e exige Joy-Cons destacados, com comunicação sem fio. A v18 tenta reduzir perda de amostras quando os quadros demoram mais, mas não resolve interferências de radiofrequência nem garante latência idêntica.
-
-Para diagnosticar, compare primeiro portátil **com Joy-Cons destacados** versus docked, usando a mesma resolução, taxa de quadros, controles e jogo. Depois repita no dock em 720p e em resolução maior. Consulte [procedimento e limitações da v18](docs/dock-motion-v18.md).
-
 ## Logs e diagnóstico
 
 Para ativar os registros de gyro, crie o arquivo vazio:
@@ -101,26 +94,25 @@ python3 tools/compare_dock_motion.py portable/ docked/ --output dock_comparison.
 
 O registro acrescenta I/O e mede principalmente o comportamento **no Switch**. Não demonstra, sozinho, a recepção pelo emulador nem a latência fim a fim. Remova o arquivo `motion_trace.enable` quando não precisar coletar novos dados.
 
-## Compilação
+## Compilação para Switch 1
 
-O submódulo Borealis contém modificações necessárias ao suporte dos Joy-Cons. Sempre faça o clone recursivo:
+Use a branch `joycon-fidelity-v20` com o submódulo Borealis fixado na revisão do projeto:
 
 ```bash
 git clone --recurse-submodules -b joycon-fidelity-v20 https://github.com/GutoMitzy/Moonlight-Switch.git
 cd Moonlight-Switch
-git submodule update --init --recursive
 ```
 
-Para Switch 1, instale o toolchain [devkitPro](https://devkitpro.org/wiki/Getting_Started) e as dependências indicadas pelo projeto:
+Se você já tem o checkout da branch, sincronize os submódulos com `git submodule update --init --recursive`.
+
+Use o [devkitPro](https://devkitpro.org/wiki/Getting_Started), com devkitA64, libnx e as ferramentas para Switch, incluindo `uam` para os shaders Deko3D. O workflow usa a imagem `devkitpro/devkita64`. Nesse ambiente, remova `switch-enet` se estiver instalado para que a compilação use a cópia do ENet fornecida pelo submódulo Moonlight Common C.
 
 ```bash
-cmake -B build/switch -DCMAKE_BUILD_TYPE=Release -DPLATFORM_SWITCH=ON -DUSE_DEKO3D=ON
-cmake --build build/switch --target Moonlight.nro -j8
+cmake -S . -B build/switch -DCMAKE_BUILD_TYPE=Release -DPLATFORM_SWITCH=ON -DUSE_DEKO3D=ON
+cmake --build build/switch --target Moonlight.nro --parallel
 ```
 
-O arquivo gerado normalmente fica em `build/switch/Moonlight.nro`. O [workflow de build](.github/workflows/switch.yml) também executa testes e publica o NRO como artefato quando a compilação termina com sucesso.
-
-Para compilações de outras plataformas, consulte a [documentação do projeto original](https://github.com/XITRIX/Moonlight-Switch) e os scripts presentes neste repositório; elas não são o foco de validação desta branch.
+O CMake gera `build/switch/Moonlight.nro`. O [workflow de Switch](https://github.com/GutoMitzy/Moonlight-Switch/blob/joycon-fidelity-v20/.github/workflows/switch.yml) roda os testes antes da compilação e publica o NRO como `Moonlight-Switch.nro`. Para outras plataformas, consulte o [projeto original](https://github.com/XITRIX/Moonlight-Switch).
 
 ## Origem, licenças e créditos
 
